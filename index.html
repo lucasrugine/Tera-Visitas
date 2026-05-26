@@ -704,20 +704,9 @@ const USERS = {
   marcos:{nome:'Marcos Hiro',ini:'MH',cart:null,tipo:'tecnico'},
 };
 
-const ROTEIRO_HOJE = [
-  {nome:'Ricardo Zaki Hanna',cidade:'Valinhos',tipo:'Fechamento de Venda',bc:'bf',hora:'13:00',orig:'gestor'},
-];
-const ROTEIRO_FUT = [
-  {data:'26/05',nome:'Fabiano J. Carbonari',cidade:'S.M.Arcanjo',tipo:'Visita de Prospecção',bc:'bp',hora:'09:00',orig:'rep'},
-  {data:'26/05',nome:'Airton Cesar Minto',cidade:'Itatiba',tipo:'Pós Venda',bc:'bv',hora:'15:30',orig:'rep'},
-];
-const HIST_DEMO = [
-  {nome:'Silvia Mineko Makiyama',cidade:'Biritiba Mirim',tipo:'Pós Venda',bc:'bv',data:'18/05',hora:'14h22',vid:'VIS-0',obs:'Pagamento confirmado. Cliente satisfeito.',tags:['#MedioPotencial','#AtendimentoPresencial','#TeraBaseGranel']},
-  {nome:'Nelson Makoto Harano',cidade:'Salesopolis',tipo:'Prospecção',bc:'bp',data:'17/05',hora:'10h05',vid:'VIS-1',obs:'Usa concorrência. 280ha de cana. Demo agendada.',tags:['#GrandePotencial','#ProdutoConcorrente','#SolucaoSugerida']},
-  {nome:'Airton Cesar Minto',cidade:'Itatiba',tipo:'Pós Venda',bc:'bv',data:'16/05',hora:'15h40',obs:'Visita rápida. Pediu orçamento TeraBase Ensacado.',tags:['#MedioPotencial','#AtendimentoPresencial']},
-  {nome:'Cooperativa Vale Verde',cidade:'S.M.Arcanjo',tipo:'Negociação',bc:'bn',data:'15/05',hora:'09h30',obs:'Proposta de 500t enviada. Aguardando diretoria.',tags:['#GrandePotencial','#Fechamento']},
-  {nome:'Ricardo Zaki Hanna',cidade:'Valinhos',tipo:'Fechamento',bc:'bf',data:'14/05',hora:'11h15',obs:'Venda fechada: 50t TeraBase Granel. Entrega 25/05.',tags:['#GrandePotencial','#TeraBaseGranel']},
-];
+const ROTEIRO_HOJE = [];
+const ROTEIRO_FUT = [];
+const HIST_DEMO = [];
 
 const REGRAS = {
   // org=matéria orgânica obrigatória, cult=culturas obrigatórias, area=área obrigatória
@@ -739,15 +728,7 @@ let USR=null, ncMode=false, cliSel=null, _ac=[], vPres=0, vRem=0, pillOn=null, h
 
 // ── SISTEMA DE COMENTÁRIOS ──
 // Em produção: carregados e salvos via API Google Sheets
-var COMENTARIOS = {
-  "VIS-0": [
-    {id:"c1",autor:"Lucas Rugine",tipo:"gestor",msg:"Ótima visita! Qual o volume estimado de compra?",hora:"14h35",data:"Hoje",lida:false},
-    {id:"c2",autor:"Ana Laura",tipo:"rep",msg:"Cliente falou em 80t de TeraBase Granel. Retorno semana que vem.",hora:"15h02",data:"Hoje",lida:true},
-  ],
-  "VIS-1": [
-    {id:"c3",autor:"Lucas Rugine",tipo:"gestor",msg:"Nelson tem grande potencial! Conseguiu agendar a demonstração?",hora:"10h30",data:"Hoje",lida:false},
-  ],
-};
+var COMENTARIOS = {};
 
 var _chatAberto = null;
 var _pollingInt = null;
