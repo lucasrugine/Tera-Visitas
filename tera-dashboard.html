@@ -16,7 +16,6 @@ body{font-family:'Nunito Sans',sans-serif;background:#F4F1EC;min-height:100vh}
 ::-webkit-scrollbar-track{background:#F4F1EC}
 ::-webkit-scrollbar-thumb{background:#DDD5C8;border-radius:3px}
 @keyframes spin{to{transform:rotate(360deg)}}
-@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
 </style>
 </head>
 <body>
@@ -93,16 +92,7 @@ var PRE_CADASTROS_DEMO = [
   {id:"PC-003",nome:"José Carlos Mendonça",cidade:"Franca",estado:"SP",telefone:"(16) 99123-4567",email_cliente:"jcmendonca@outlook.com",documento:"234.567.890-12",potencial:"Baixo (até 10t/ano)",representante:"Paulo Rezende",data:"20/05/2026",hora:"11h00",status:"Em análise"},
 ];
 
-var COMENTARIOS_DB = {
-  "0":[
-    {id:"c1",autor:"Lucas Rugine",tipo:"gestor",msg:"Ótima visita! Qual o volume estimado de compra?",hora:"14h35",data:"Hoje"},
-    {id:"c2",autor:"Ana Laura",tipo:"rep",msg:"Cliente falou em 80t de TeraBase Granel. Retorno na semana que vem.",hora:"15h02",data:"Hoje"},
-  ],
-  "1":[
-    {id:"c3",autor:"Lucas Rugine",tipo:"gestor",msg:"Nelson tem grande potencial! Conseguiu agendar a demonstração?",hora:"10h30",data:"Hoje"},
-  ],
-};
-
+var COMENTARIOS_DB = {};
 function calcDias(de,ate){if(!de||!ate)return 5;return Math.max(1,Math.round((new Date(ate)-new Date(de))/(864e5))+1);}
 function fmtDt(d){return d?new Date(d).toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"}):"-";}
 function getData(de,ate){ return null; } // substituído por useApiData
@@ -460,7 +450,7 @@ function PageDash({de,ate}){
         })}
       </Card>
       <Card title="Visitas recentes" action={<span onClick={()=>{}} style={{fontSize:11,fontWeight:700,color:V3,cursor:"pointer"}}>Ver todas →</span>}>
-        {VISITAS.slice(0,4).map((v,i)=>{
+        {(visitas&&visitas.length>0?visitas:VISITAS).slice(0,4).map((v,i)=>{
           var ICOS={"Prospecção":"🔍","Pós Venda":"🤝","Fechamento":"✅","Negociação":"📄"};
           return <div key={i} style={{display:"flex",gap:10,padding:"9px 0",borderBottom:i<3?`1px solid ${BRD}`:"none"}}>
             <div style={{width:30,height:30,borderRadius:"50%",background:VP,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,flexShrink:0}}>{ICOS[v.t]||"📍"}</div>
@@ -531,7 +521,8 @@ function PageTimeline(){
     setNovaMsg("");
   }
 
-  var V_vis=chatIdx!==null?VISITAS[chatIdx]:null;
+  var _baseVis=visitasReal.length>0?visitasReal:VISITAS;
+  var V_vis=chatIdx!==null?_baseVis[chatIdx]:null;
   var msgs=chatIdx!==null?(comentarios[String(chatIdx)]||[]):[];
 
   return <div style={{display:"grid",gridTemplateColumns:chatIdx!==null?"1fr 380px":"1fr",gap:16,alignItems:"start"}}>
@@ -829,7 +820,7 @@ function PageComercial(){
       <table style={{width:"100%",borderCollapse:"collapse"}}>
         <thead><tr>{["Rep.","Prosp.","Neg.","Fech.","Valor","Conv."].map(h=><th key={h} style={{fontSize:9.5,fontWeight:800,color:INK4,textTransform:"uppercase",letterSpacing:".6px",padding:"6px 8px",textAlign:"left",borderBottom:`1.5px solid ${BRD}`}}>{h}</th>)}</tr></thead>
         <tbody>{REPS.slice(0,5).map(r=>{
-          var vis=0||pros=Math.round(vis*.48),neg=Math.round(vis*.12),fec=Math.round(vis*.1),val=fec*7500;
+          var vis=0,pros=Math.round(vis*.48),neg=Math.round(vis*.12),fec=Math.round(vis*.1),val=fec*7500;
           return <tr key={r.n} style={{borderBottom:`1px solid ${BRD}`}}>
             <td style={{padding:"9px 8px"}}><div style={{display:"flex",alignItems:"center",gap:7}}><Av ini={r.i}/><span style={{fontSize:12,fontWeight:700}}>{r.n.split(" ")[0]}</span></div></td>
             <td style={{padding:"9px 8px",fontFamily:"JetBrains Mono,monospace",fontSize:12}}>{pros}</td>
