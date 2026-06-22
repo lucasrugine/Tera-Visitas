@@ -1,0 +1,1724 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tera Visitas · Dashboard Gerencial</title>
+<meta name="theme-color" content="#1A5C3A">
+<link rel="apple-touch-icon" sizes="180x180" href="icon-dash-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-dash-192.png">
+<link rel="manifest" href="#" id="dash-manifest">
+<script>
+(function(){
+  var m={name:"Tera Painel de Gestão",short_name:"Tera Painel",start_url:new URL("tera-dashboard.html",location.href).href,display:"standalone",background_color:"#1A5C3A",theme_color:"#1A5C3A",
+    icons:[{src:new URL("icon-dash-192.png",location.href).href,sizes:"192x192",type:"image/png"},{src:new URL("icon-dash-512.png",location.href).href,sizes:"512x512",type:"image/png"}]};
+  var b=new Blob([JSON.stringify(m)],{type:"application/json"});
+  document.getElementById("dash-manifest").href=URL.createObjectURL(b);
+})();
+</script>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Nunito Sans',sans-serif;background:#F4F1EC;min-height:100vh}
+#root{min-height:100vh}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:#F4F1EC}
+::-webkit-scrollbar-thumb{background:#DDD5C8;border-radius:3px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── VERSÃO CELULAR (adaptação automática até 760px) ── */
+@media (max-width:760px){
+  #root>div{flex-direction:column !important}
+  aside{width:100% !important;height:auto !important;position:static !important;overflow:visible !important}
+  aside>div:first-child{display:none !important}
+  aside nav{display:flex !important;flex-direction:row !important;flex-wrap:nowrap !important;overflow-x:auto !important;padding:8px !important;gap:2px}
+  aside nav>div{flex-shrink:0 !important;margin-bottom:0 !important;white-space:nowrap}
+  aside nav>div[style*="uppercase"]{display:none !important}
+  main>div:first-child{flex-wrap:wrap !important;gap:8px !important;padding:10px 12px !important}
+  main>div:last-child{padding:12px 10px !important}
+  div[style*="repeat(4,1fr)"],div[style*="repeat(4, 1fr)"]{grid-template-columns:repeat(2,1fr) !important}
+  div[style*="repeat(3,1fr)"],div[style*="repeat(3, 1fr)"]{grid-template-columns:repeat(2,1fr) !important}
+  div[style*="grid-template-columns: 1fr 1fr"]{grid-template-columns:1fr !important}
+  table{display:block;overflow-x:auto;white-space:nowrap}
+}
+</style>
+</head>
+<body>
+<div id="root">
+  <div style="display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;gap:16px;font-family:'Nunito Sans',sans-serif">
+    <div style="width:48px;height:48px;border:4px solid #EAF4EE;border-top:4px solid #1A5C3A;border-radius:50%;animation:spin 1s linear infinite"></div>
+    <div style="color:#5C6B5C;font-size:14px">Carregando Tera Visitas...</div>
+  </div>
+</div>
+<script type="text/babel">
+const { useState, useEffect, useRef, createContext, useContext } = React;
+
+
+const API_URL="https://script.google.com/macros/s/AKfycbzTPbl8CvTireGpFcVpeEkN3Jy6ttCzmrZRM1v5Qnq2pR2mWxEN_-CfV3bMvhrXww2q/exec";
+const V="#1A5C3A",V2="#2D6B45",V3="#3D8055",VP="#EAF4EE",VM="#C5DFD0";
+const O="#E86510",OP="#FEF0E6",M="#7D3E12",MP="#F5EDE6";
+const B="#2563EB",BP="#EFF6FF";
+const LOGO_TERA="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAABEgAAAF6CAYAAAAK8W3XAABNVElEQVR4nO3dS3IaSfv+/ev5xTN0hPSuQMihuXhmzIxXYHoFwgOYGq3AeAXCUxg0WkGjFXRpxqzRXGGVVvCHCM/9DuqmjTHFsTKzDt9PhKLdIDJvSZzyIg//+fHjhwAAAAAAAKrs/0IXAAAAAAAAEBoBCQAAAAAAqDwCEgAAAAAAUHkEJAAAAAAAoPIISAAAAAAAQOURkAAAAAAAgMojIAEAAAAAAJVHQAIAAAAAACqPgAQAAAAAAFQeAQkAAAAAAKg8AhIAAAAAAFB5BCQAAAAAAKDyCEgAAAAAAEDlEZAAAAAAAIDKIyABAAAAAACVR0ACAAAAAAAqj4AEAAAAAABUHgEJAAAAAACoPAISAAAAAABQef8NXQCq6/vt25qk1S9Jqks6P6CZyP47lzSTNH9z9212YmkAAAAAgIr5z48fP0LXgJL7fvv2XEnw0VQShNQlXTvu9lVJYLL8it7cfZs77hMAAAAAUFAEJMicBSLNlS/XYci+XpXMOImUBCZxyGIAAAAAAPlBQIJM2HKZln29C1nLAZ6UhCVjluUAAAAAQLURkOBoNlOkbV95mSVyrFdJE0kDZpYAAAAAQPUQkOBg32/ftpSEIh/CVuLMk6SBpAn7lgAAAABANRCQYC8rs0V6ki5C1uLRQtJYzCoBAAAAgNIjIMFWFoz07OssZC2B3UvqE5QAAAAAQDkRkGAjgpFUBCUAAAAAUEIEJPjN99u3fRGM7HIvqcceJQAAAABQDgQk+JdtvjpQdfYYOdVCyf4k/dCFAAAAAABOQ0ACfb99W1OyGem7sJUU1quk9pu7b1HoQgAAAAAAxyEgqbjvt297kvpiOU0WvirZn2QeuhAAAAAAwGEISCqKWSPOMJsEAAAAAAro/0IXAP++375tS5qJcMSFC0l/f799OwhdCAAAAABgf8wgqRA7uncg6SZsJZXxJKnFkcAAAAAAkH8EJBXx/fZtXcmSmuuwlVTOQklIEoUuBAAAAACQjiU2FfD99m1TUiTCkRDOlCy56YUuBAAAAACQjoCk5Gy/kb/FKTWh3X2/fTsOXQQAAAAAYDOW2JSYbRT6KXQd+MWDklNu5qELAQAAAAD8REBSUjZbgc1Y8+lJUpOQBAAAAADygyU2JUQ4knvXkiI7VQgAAAAAkAMEJCVDOFIYhCQAAAAAkCMEJCVCOFI4hCQAAAAAkBMEJCVBOFJYhCQAAAAAkAP/DV0ATvf99m1fhCNFdi1pLKkVtgxkZdhptCW1A5cBbNPrjqaz0EXkzbDTqEs6t6+6Xbz670PMJc1W/j+y/866o+n8iPbgEM/blTXXz8dpJGnOcyO2GXYaTftnXcnrgyQ1N3zrLtH6v7ujabTpG+EXp9gU3Pfbt21Jf4auA5m4f3P3rR26CJxu2Gn0JX0OXQewxfuqvhEbdhrnSt7YNvUz/KhLOvNcypOSwVmkZIAWMzALh+dtrHlS8riMlISas5DFwD8LQuqSavL/OvEoKbavSATrXhGQFNj327d1Sf+ErgOZun1z920QugichjfaKIBKBCRrYUhTYYKQQz3q58As4k2xHzxvY4dXJY/JiXhcls6w06jp19eJ63DVpFreByMl98E4ZDFlRkBSUN9v39aUvIHK+xs9HO79m7tvUegicDzeaKMAShuQDDuNln6+0c3jm9xDPennG+JJ2FLKi+dtHOhB0pjHZHHZa0VLyWvFRchajrQamEwI7bJDQFJQ32/fzlSON3743UJS/c3dtzh0ITgOb7RRAKUJSOyTv5aSN7kfQtbiyYOST7F5Q5whnrdxpIWSfeQGfKKfbzajsGVfZXyteNDPsCQOW0qxsUlrAX2/fTsQ4UiZnSl581sPWwYA5NNKKNJW9V4PP9jXn8NOg7AECOtM0idJn4adxr2SWSVR2JKwymaKtFXOUGTV8rXhjteG0zCDpGC+375tSfordB3w4uubu2+90EXgcHwSiQIo3AwS+/SvrWqGIvu4V/JmeBK6kCLieRsZepTUL9pzbJlYiN5T8npR5e0IFkqCkgEbDe+PgKRAvt++PVeym3GVH+hVw34kBcQbbRRAYQISO0mgLY6z39erpIGST7LnYUspDp634cCDkiPV49CFVIXNFulJehe2klx6UhKUjEMXkncEJAXy/fZtJB7wVfOqZD+SeehCsD/eaKMAch2QrMwW6amYm+flxb2ST7Lj0IXkHc/bcOiLkoHpPHQhZTXsNNqS+uL1Yh+v+rlvzjxsKfn0f6ELwH6+375ti3Ckii6UPOEDQOkNO43asNMYKJkteSfe7J7qRtLLsNOIbCYOAP8+S5rxGMzesNNoDzuNWNKf4vViXxdK7pPxsNPo2wcSWEFAUgC2tGYQuAyE8+n77dtm6CIAwBULRsaSXpRseMhS0my9k/Q3QQkQzIWSx+CAAenpCEYycaaVoCRwLblCQFIMA/FmserGoQsAgKytBSPsMeIeQQkQ1idJ0bDTqIcupIiGnUaTYCRzZ5I+DzuN2JYqVR4BSc7ZzAHeNOLi++3bfugiACALBCPBLYOSsZ32AMCfayUhSTt0IUVhrxmRpL9FMOLKhZLj4ysf4BGQ5N8gdAHIjZ4ttwKAQhp2Guc2lXcmgpE8WO5Rwjp0wK8zJYPRQehC8s5eM17EXoy+vJP0T5WXgxGQ5JhtzHodug7kxpkIzAAUlH1aGitZ88yy0XxZbiLZCl0IUDGfbCbXeehC8mZlOQ2nS4XxScn+JK3QhfhGQJJv/dAFIHduvt++rYUuAgD2New06jY1+k8RjOTZhaS/bHp1LXQxQIXcKFlycx66kDywmYYDsZwmD86UvC5MqnT/JCDJKZs9wpMCNumHLgAAdllZTvOPmBpdJO+UzCbphS4EqJDlviTnoQsJyfa+iJTMXkB+fFAym6QZuhAfCEjyqx+6AOQWs0gA5Jq9iZqJqdFFdSbpjtkkgFeVDkkslP1HbC+QV2eyo6pDF+IaAUkOMXsEe+iHLgAA1jE1unSYTQL4VbmQxF43JpLuQteCvXwadhqzMt9HCUjyqR+6AOQes0gA5ApTo0trOZukUmvQgYCulTyXlp69bsyULOFAcVyrxEtuCEhy5vvt25b41A376YUuAAAkpkZXxAcls0nqoQsBKuB62GmMQxfhkp1sFolxT1Etl9y0QxeSNQKS/OmFLgCF0f5++/Y8dBEAqoup0ZVzIekfltwAXtzYRtelY88hnGxWDn+WLcz7b+gC8JMtmWCnf+zrTFJL0jhsGQCqyGYSTFS+T/+eJM2VTPuer/x7ad4dTWdaY8tP6msXN+2/dUnL68swILizv3+vO5rOA9eSd1+6o2k/dBH4yTYertn/NvXzsZnH9+Cfh53GrDuaTkIXkhUbTN+EruNEy9eJyP5/Zv8vSeqOptHa9y9fM89XLmraf5eX5/H+t68bew1sl+E14T8/fvwIXQPM99u3A7F2G4d5enP3rR66CPzKphu2A5eRdy7fCLxKih22Xwa9TYP8fdl9fKBiD/ZflbypXX7Fp/xODmHrtmtK3hjXVdw3xk+SWt3RNA5dyKnsk3oXpy4RkBSIPTZbSgaveVkyuJBUL/rjzAbQYxVvv5FHrbxWuHydsPCubl9NFe+14UlSs+ghCQFJjny/fTtXsd9sIozLN3ff4tBFAIcYdhouX3wYkDjkcCDp2quST/siSVHeBhv26WJz5aso7wcWSt4Qz0IXcgoCEqyzwWpPyQceoR+Pj93RtBm4hqNZOBIpP6HTNk/6+ToxCVvKv6FdU0lwV5TfX6FDEgKSnLDNWf8KXQcK6eubu2+90EUAhyAgKR57gztQsaZGPyh5ozvJWyCyy8on2S3lfxnTQsmspHHoQo5FQIJtbNZcX2Efi4W8LxUkHHlSMrsl168VFtq1lIR2ef99FjYkISDJie+3b8cq1ptO5Mfrm7tvtdBFAIcgICmWgrzBXXpQsjfKpKhvztatvCnuKd9hyceihiQEJNhHDpYX/q9Is7Vy/trxquS1YpDnUCSNvS607SuPrwuFXRpGQJITLK/Bif735u7bLHQRwL4ISIoj529wl5af/o3LEoqksaU4beVj2v8m993RtB26iEMRkGBf9pzYV5h9Awuz1CbHrx2PSl4rxqELycqw02gpCdDztmdJIWeScMxvDtjymjy+yUFxtEMXAKB8bDAeK39vcJfulXyiWu+OpoOivQk7Rnc0nXVH0153ND2X9FHJG9A8uSnbkY/Aqu5oOu+Opj1J/1MyC8GndzaLJddyGo48SHrfHU2bZQpHJKk7mk4sOLtU8rqYF9eSIrs/FAYBST40QxeAwmuGLgBAuVg4Eil/Af5C0hdJ/193NG0Xabp51rqj6bg7mtYlvVfy5j8vCElQevbcU5f/AemgAAPOsfITjjxIuuyOpq1Nx++WSXc0jW0GX56CksKFJAQk+dAKXQAK7/r77dta6CIAlENOw5FlMFLrjqb9KswW2Vd3NI26o2lL+XpTTEiC0rPZJG1Jtx67PVOynCKX7HGfh6N8H5XMGCnFUeSHWAtKHgOXIyUhySR0EfsiIAnMBrV53FgHxdMMXQCA4sthOEIwsqccfnpISIJK6I6mAyVL3haeuuzZJp25Ynv5hD504lXJhtHNss8Y2cVeE5pKZhn6Xg627l1RXg8ISMJrhi4ApdEMXQCAYsthOEIwcoSVoOS9wn96SEiCSrB9LZryE5KcKdkoNjdsbxQXGx0f4quSk1PGgevIFZtlWFPymhrSzbDT6AWuYScCkvCaoQtAaTRDFwCguHIWjizXjBOMnMDeFDcl/aGwnx4SkqASbF+SlqfubvKyr4O9fgwClvCqZDlNj9eMdHai1v8UdnPvOzt1J7cISMJrhi4ApXHBPiQAjmFvsicKH44s3+RWbs24S93RdKJkM8mQnx4SkqASbFnHR0/d9Tz1kyoHrx/LWSNRoP4LxU5Cqyvs68E4j0vElghIAvp++/Zc7D+CbNVDFwCgWFaOYwz9esSbXIdsM8m+wn56eFOEI0qBU9kSDx8D0J6HPnYZK8zrx0LSH8waOY69HoTam+RM0iQvM6DWEZCEVQ9dAEqnHroAAIUzUdjjGJka7VEOPj38k5AEVWADUNfHb5+FfDzZpqwhTqx5UhKoTwL0XRr2gURdYfaqulbO9tFZIiAJqxm6AJROM3QBAIrDljy8C1gCs0YCCTybZGB7FgBl15b7TVvbjtvfyB7DITZlvZfUZBlmNmx2YVPJ67Fvn/K4HwkBSVi10AWgdGqhCwBQDLaTfKjjGJkanQO2oWRT/o8EPpMU5XkNOpAFe35rO+7mne/H0sq+I7596Y6mbV43stcdTXvyt3fOqnHeltoQkIRVC10ASif0HgIACmDYaTQl3QXqnqnROWKfHraVvDH2cTzpUq7XoANZsec610ttWo7bX9eX//ecH23mGxyxvXP+UIDXAo/97URAElbIac0oqe+3b+uhawCQX/ZJ4yRQ90yNzil7Y9yU3w37rhX2aFDAl57cDjrbDtv+hQXsn3z1Zz7acxQcs0CvKb8hyTub1ZoLBCRA+ZyHLgBArk0U5jjGW6ZG55stuanL774kN3l6Ywy4YKHwwGEX1z6W2diMr7HrftYQjni2svzSZ0jSz8uMQgKSQL7fvm2GrgGlVQ9dAIB8GnYaA/k/sWah5A3uwHO/OIItuanL774kd/apNFBmA7kdcLYctr3Uk9+lNe8JR8IIEJKcyX/4thEBCVA+56ELAJA/tlO872nRCyVLasae+8WJbF8SnyEJ+5Gg1Gz23NhhF02HbYc4teYjJ5yFFSAk+ZCHsJyAJJzz0AWgtM5DFwAgX2zq9dhzt8twZOa5X2RkZfNWH3K3UR/gwMBh202HbUt+9wtiWU1O2Gt4y2OXY499bURAEk49dAEorXroAgDkzlh+9x15FeFIKdggxVdIkquN+oCs2V4krk60ObNZHpmzGYi+Dpf4QjiSLzaTx9frwMWw0+h76msjAhIAAErMBpw+T01bHuM789gnHPIckty5GuQBOTFx2HbdUbsDR+2uu+co33yy14GvnrrrhVxySUACAEBJ2dKavscuF5JanFRTPp5DkrGnfoAQJg7brmfdoIXsPjZmfVKyCSxyqjua9uRuBtSqMwW8LxCQAABQXmP5W1qz3HMk9tQfPPMYklyHnmINuGIB8qOj5utZNmaf4vezbDMF4XpxtJUso3Xts4+jqzchIAEAoISGnUZb/pbWsCFrRXicZv2ZpTYosYmjdusZt9eTn5C9TbheDBZitTx11/fUzy8ISAAAKBn71G/gscsW4Uh12DRrH0cAjz30AYQwc9RuZmGGvY70smpvi6/d0XTioR9kxF7vbz10dRNiFgkBCQAA5TOQv6U1H22He1SIHQH85Liba061QRm5fM4cdhrNjJpqy/3ryJMFriiY7mg6kLulYqv6Hvr4BQEJAAAlYssSbjx195XjGCutKfchST/kaQaAQ64fO6fqeeij7aEPuNNWssTWpZbv1wACEgAAymXgqZ9HPvmrNluL3pbbN8hn8rtcDPBl7qjd81MbsD2sXJ9c84WlmcVm+8b0HXfj/UQbAhIAAEpi2Gm05Gdj1lf526QNOWYDnJ7jbm4yXDYA5EXkqN16Bm30Mmhjm1cRfJaCp6U2bcft/4KABACA8hh46ofjGPEvTyfbDBy3D0D/LtO8dtxNj9eQUuk5bv/CZjV5QUACAEAJeJoSLUm3TIvGOltu5XJPhWufb5CBCus5bv+RU2vKxd4TuD7ZrO24/X8RkADlE4UuAEAQfQ99PNp0WmCTttzuR9J32DbgWxy6gHW2GWbLcTc9x+0jjJ7cPv+/83XkLwEJAAAF52n2yELsO4It7FPEvsMuLoadhsv2AZ/i0AVs0JLbo33vmYFYTrZkauC4m57j9iURkABlFIcuAIB3fQ99tFkzjl08bNjX49hflEQzdAEbtB2333fcPsIayO0skpbDtv9FQAKUTxy6AAD+eJo98sCacRygLXdvkr0f+QhUgS1fcHkK2r0dC4uS8jCL5MI2EXaKgAQonzh0AQC86jtufyEGpDiADYIGDrtgFgmQvZbj9vuO20c+DOR2FknbYduSCEiA0nlz9y0OXQMAPzzNHhnwqR8O1R1N+3J3qg2zSFAGNUftzo+8XTvDGtY98jpSDTaLZOKwi5bDtiURkABl4/KIRQD503bc/qsNdIFj9AraNuBDzVG7s0NvYDOyrjOv5Ke+w7aRP32HbTtfZkNAApRLHLoAAH7YGwSX68UlD1NZUV7d0TSS9OCo+TObQQUUVT10AStaDtt+tecCVITNFnK5WXfLYdsEJEDJzEIXAMCbnuP2H3lTiwz0HLbdd9g24IxtiOrqON34iNu0Mq5h1cBh28ivscO2Ww7bJiABSiYKXQAA92w6dMtxNz3H7aMC7JPEe0fNXww7jaajtgGX6q4aPnKvj2bGZayaOGwbOdUdTcdyt1nrtcuNuglIgHKZhS4AgBctufv0UUqOY5w5bB/V0pO7N8o9R+0CLrUctXvwXnS2XNPV68kDm7NW2sRh201XDROQAOXx9Obu2zx0EQC86Dluv++4fVSInWowcNT8B1uuABRJ01G78RG3aWZcw6qJw7aRfxOHbTddNUxAApRHFLoAAO7ZYNDlaQP3fOIHBwYO2+45bBvIlM3YcHU8++yI2zQzrmHVxGHbyLnuaDqRu9mDTUftEpAAJRKFLgCAFz3H7Q8ct48KslkkrvYiaTlqF3Ch7bDt6IjbNDOuYenJHveotomjdp19UERAApRHFLoAAF60HLb9yN4jcKjvqN2LYafRctQ2kLWWw7Znh3yz49N0xo7aRbFErhp2tUk3AQlQDo/sPwKUn+Op2RKzR+CQLd16cNR8y1G7QGaGnUZb7p7Dj5mxUXdQx1LksG0Ux8Rh23UXjRKQAOUwCV0AAC/aDtt+tfXCgEsDR+3euDz2EchI22Hb0RG3qWdcw9KC2YiQ/l1eefDpSnuqu2iUgAQoh0noAgB40XTY9sBh24AkqTuaRpJeHTXfctQucDJbDvDOYReTI25Tz7iGpchRuyimyFG7NReNEpAAxff05u5bHLoIAG55OL1m7LBtYNXAUbstR+0CWRg4bHth4eOhahnXsTRz1C6KaeaoXSeBIwEJUHzj0AUA8KLlsO0HThuARxNH7X5gmQ3yyPYecRlwT468nauaIkftophmrhq2D48yRUACFN8kdAEAvGg6bHvssG3gF2zWiiqx0G7guJvJoTdwMbBcMXPYNgrG8X40tawbJCABiu2B5TVAZTQdtbtgc1YEMHHUbtNRu8CxxnJ3lK50/HN4LeM6lhbMSMQGj47arWfdIAEJUGzj0AUAcM8293P1BnviqF1gm4mjdluO2gUOZktrPjjuZnzk7WoZ1rBq5qhdFFvsqN3zrBskIAGK6/XN3bdJ6CIAeNF02PbEYdvARvYJs4tlNmfDTqPuoF3gIHY/HHjo6tg+ahnWsGrmqF0UW+yo3VrWDRKQAMU1Dl0AAG/qDtuOHLYNbDNx1G7LUbvAXmzfkbHcLq2RpEfb0ydP5qELQC7NHLVby7pBAhKgmBby86kEgHxoOmqX02sQUuSo3aajdoGdLByJ5PbUmqX+CbdtZlTDupmjdlFs89AF7IuABCimwZu7b/PQRQBwz6Zpu/oUMnLULrCTffL95KDpdw7aBPY1lp9w5Kk7mkYe+jnUPHQByKXYUbu1rBskIAGKh9kjQLXUHbYdOWwb2EfkolHb2BjwZthpnA87jUjuN2Vd6nvqBziZw6VgF1k3SEACFA+zR4BqqTtqd9EdTWeO2gb2FTlqt+moXeA3K8tqfM1eeszx8eyz0AUApyAgAYqF2SNA9dQdtRs5ahc4ROSo3aajdoFf2DLImfwsq1nqZ9CGkzCHfa1QdAQkQLEwewSonrqjdiNH7QJ7s8GUi31I6g7aBH4x7DR6Sp5LM5/mv8VDTvceAXZZhC5gHwQkQHG8itkjQKXYtG1XG7TOHLULHGrmoM2zYadRc9AuoGGnUbP9Ru7k/ijfVQtJPY/9AVmahS5gHwQkQHH0mD0CVE7dVcN8AokcmTlqt+6oXVTYsNPoK7nPhjgtaeBws0sAkv4bugAAe3l8c/dtEroIAN7VHLXrYkkDcKyZo3brkiaO2kbFDDuNtpK9P3wup1n11B1N+4H6BiqDgAQohnboAgAEUXPUbuyoXeAYM0ft1h21i4qwZY49Je/DQgUjUrK0ph2wf6AyCEiA/Pvy5u5bHLoIAEHUHbU7c9QucLDuaDofdhoLZb+XQy3j9lABFoq07OtDyFpW9DmWHfCDgATIt6c3d9/6oYsAEMy5o3ZjR+0Cx5op+z0dfB67ioKyzXxrSo6GbirM3iLb3HdH00HoIoCqICAB8muh5NMLANVVc9RukxM+kDM1F40OO41aFTa1tONmzwOXURTNlX/nLQxZ96SCnVpjm9gCm9RCF7APAhIgv3osrQEqz9Wa9xtH7QJ5U1M1ZkxF9uXzyFm4tZDU6o6m89CFHOhz6AKAU3DML5BP92/uvo1DFwEAQMHVQhfgg+1P0VQyqEbxLSQ1qzD7CcgbAhIgfwo3nRJA9oadRj10DUAJ1EIX4AshSan02JQVCIOABMiXhaT2m7tv89CFAAjuPHQBAIqFkKQUPnZH03HoIoCqIiAB8qX15u7bLHQRAACURDN0Ab4RkhQa4QgQGAEJkB8f39x9i0IXAQAAio2QpJAIR4AcICAB8uErm7ICAICsEJIUxkKEI0BuEJAA4d2/ufvWC10EgNyphy4AKIFa6AJCIiTJveVpNePQhQBIEJAAYd2/ufvWDl0EgFw6D10AUAIXoQsIjZAkt54k1TitBsgXAhIgHMIRAADgHCFJ7tx3R9N6dzSdhy4EwK8ISIAwCEcAAIA3hCS5sJD0R3c0bYcuBMBmBCSAf4QjAADAO0KSoB4l1buj6SR0IQDSEZAAfn0hHAEAAKEQkni3PKWm2R1N49DFANiOgATw5+Obu2/90EUAKIw4dAEAyomQxJuvSjZiHYcuBMB+CEgA9xaS3r+5+zYOXQiAQolDFwCgvAhJnHqUdNkdTXtsxAoUCwEJ4NaTpPqbu29R6EIAAABWEZJk7kHSe5bTAMVFQAK4cy+p+ebuWxy6EAAAgE0ISU62UPKe77I7mra6o2kUuB4AJ/hv6AKAElpIar+5+zYJXQgAAMAu3dF0Nuw0mpIiSWdhqymMJ0ljSWOW0QDlQUACZOtRSTgShy4EQOHFoQsAUB2EJHtZhiITltAA5URAAmRjIan/5u7bIHQhAMqhO5rGw04jdBkAKoSQ5DevSn4XkaSIUAQoPwIS4HQPSmaNzEMXAgAAcIqKhiQLSTNJc/tvJGnG0hmgeghIgOM9SepxQg0Ah54kXTto91bJIAAAfpOTkMTH81TMrJDMvQ9dAHJrIDfvaTJFQAIc7lXJcppx6EIAlN7cVcOctABgmxyEJH1JTTtlBwXBawvSDDuNeega9sExv8D+FpK+vLn7ViMcAeBJ7Kjdc0ftAiiRwEcAn0mKhp1GPUDfACqKgATY7VXSR0m1N3ff+oFrAVAtsaN2m47aBVAyhCQAqoSABEj3KOnjcsYIm7ACCGDmqN2ao3YBlBAhCYCqICABfrWQ9FXS5Zu7b02W0gAIbO6o3Ythp3HuqG0AJURIAqAKCEiA5IX+XtIfb+6+nb+5+9Z7c/ctDlwTALje7K7usG0AJURIAqDsCEhQVa/6NRRpv7n7NglcEwBs8uqo3aajdgGUGCEJgDIjIEFVLAORWyXLZ2qEIgAKInbUbtNRuwBKjpAEQFn9N3QBgAOPSgYUsaRI0owNVgEUWCTpnYN2XbQJoCK6o+ls2Gk0lTxHnXnufhmSNC2sAYBMEJCEM1byguJDXdK5p76ydq6f6+Rn+n3Dwti+9ObuW+SjIADwbOaqYRtcRK7aB1BuhCQAyoaAJBDbBDT21F3kqR8AQPYih203HbcPoOQISQCUCXuQAACQY93RdC53G7W2HLULoELYkwRAWRCQAACQf5Gjdq+HnUbNUdsAKoSQBEAZEJAAAJB/kcO2mw7bBlAhhCQAio6ABACA/Isctt1y2DaAiiEkAVBkBCQAAORcdzSN5W4fkg/DTuPcUdsAKoiQBEBREZAAAFAMkcO22w7bBn4z7DSiYacxHnYardC1wA1CEgBFxDG/DtnGdzX73+ba1avXrZpJmjspyL25kvpdmtmJDgBQNRNJN47abksaOGob+IW9P3pnXzfDTuNVyf17zFGt5cIRwACKhoAkA5ZO15UEHk3778WRzb3LoKQyey+3n6ICQF5FDtu+HnYaNVvKA7jWW/v/C0mfJH2ysGSsJCyJ/ZYFFwhJABQJAckRbDpoXUkYQqABAHCuO5rOh53Gg6QPjrro6feBK+BCe8t1F5I+S/o87DSelIQlE8KSYiMkAVAUBCR7sKmgLfsiEAEAhDKRu4CkPew0+ixjhEvDTqOt/QfI15LuJN1ZODhREpbMnRQHpwhJABQBm7SmGHYatWGn0Rt2GjNJL0peoAlHAAAhTRy2fSaO/IV77SNv90HSn5L+37DTmLC5azGxcSuAvCMgWTPsNNrDTiPSz1DkOmxFAAAk7JPzB4dd9B22jYqz2QNZfNj0QdJfw05jzkk4xUNIAiDPCEj072yR/rDTmCv5dIKZIgCAvJo4bPvClkAALvQybu9MyclOfw07jTjjtuEQIQmAvKp0QGLByFjJbJHP8r8eEgCAQ00ct9923D4qyPZzc7V/jiTNHLYNBwhJAORRJQOStWDkJnA5AADszZbZ3Dvs4p0thQCy1Hfc/thx+3CAkARA3lQqICEYAQCUxNhx+33H7aNCbPaIy/ddi+5oOnHYPhwiJAGQJ5UISIadxvmw0+grmX5JMAIAKLTuaBpJenXYxTs2vkSGBo7bHztuH44RkgDIi9IHJPYGbyb2GAEAlMug4O2jAmy5lsu9RyTuq6VASAIgD0obkNiskYmkvyRdBC4HAICsjeV2IHEx7DR6DttHNfQdt//QHU1jx33AE0ISAKGVMiCxWSOx3H9iAQBAELZZ68RxN/1hp3HuuA+UlB0Z/c5xNwPH7cMzQhIAIZUqIFmbNcJyGgBA2fUdt38mBqA4ggVrA8fdvNp+PCgZQhIAoZQmILEnsZmYNQIAqAhbWvDguJsbjv3FEfpy/2FV33H7CIiQBEAIpQhIbArnP2KvEQBA9QxK0gdKwgK1T467ee2OpmPHfSAwQhIAvhU+IBl2GmNJf4auAwCAEGyJwaPjbq6HnUbfcR8oAVtaM/bQ1cBDH8gBQhIAPhU2ILH9RiJJN6FrAQAgsL6HPj4zSMAe+nI/o3chPyEMcoKQBIAvhQxI7NOJSO53RgcAIPc8zSKRpAmn2iCNp6U1ktS3U5xQIYQkAHwoXEBiT0yxpOuwlQAAkCt9D31ciKUN2MCCs4mHrl67o+nAQz/IIUISAK4VKiCxJ6RIHOELAMAvbBbJvYeubmxzdGDVRH7en/U99IEcIyQB4FJhAhLCEQAAdup76mfAAAFLtoGvj2XPnFwDSYQkANwpREBCOAIAwG7d0TSW9MVDV2diPxJIGnYaLUmfPXXX9tQPCoCQBIALuQ9ICEcAADjIQH4GDBfys+cEcsreo409dfdgy8iAfxGSAMhargOSlQ2/CEcAANiDne7R89Tdu2GnMfbUF3LE3qON5e89Ws9TPygYQhIAWcptQLJylO9F2EoAACgW26fBx7G/UrJpa89TX8iBlfdovk4U/GLLx4CNCEkAZCW3AYmSTyU4yhcAgOO0PfZ1x8k2lTKQv/dor93RtO+pLxQYIQmALOQyILHd0D+ErgMAgKLyuGHr0p+EJOVnS6puPHbZ9tgXCo6QBMCpcheQeN4NHQCA0rJP3p88dvmnvY6jhAKEI1/ZmBWHIiQBcIpcBSTDTqMmf7uhAwBQBW3P/Y0JSconQDjyKqnvsT+UCCEJgGPlKiARJ9YAAJApGyj4XGpzJukvltuUR4BwRJLadiITcBRCEgDHyE1AMuw0BmJTVgAAMmdLbXydarPEniQlECgc+cLSGmSBkATAoXIRkAw7jaakT6HrAACgxNryP0ggJCmoYadxPuw0ZvIfjjxxag2yREgC4BDBA5Jhp3Eu9h0BAMApO9WmHaDrP20WAgrC9oSL5H9m70JSy3OfqABCEgD7Ch6QKNmA6yJ0EQAAlF13NJ1I+hqg65thpzGxD0WQYzaImynMsue2BXlA5ghJAOwjaEBiTxIsrQEAwJPuaNqT//1IJOmDGCDkmi2H+kdhNsz/YgEe4AwhCYBdQs8gGQTuHwCAKmopOUbVt2slA4RWgL6RwvYbGUv6M1AJD+w7Al8ISQBsEywgsU8p3oXqHwCAqrLjU1sKN0D4y06vQ2A2UIvkfzPWpSeF2RsHFUZIAiBNyBkk/YB9AwBQaTZAaAcs4dOw05gxSAhn2Gn0FGYz1qWFpJYFdoBXhCQANgkSkAw7jb7YmBUAgKBsz4ePAUu4lvSPvS+AJ8NOozbsNCJJdwqz34iUDEqbbMqKkAhJAKzzHpDYDvY93/0CAIDfdUfTsaT7wGV8ZjaJHzZrZKbwy5x7NjgFgiIkAbAqxAySnsJ9WgEAANZ0R9O2wock/84m4Tjg7A07jXoOZo0sfbRgDsgFQhIAS14DEmaPAACQTzkJSSTps6SZbeaOE9kJNQMlx/eGnjUiEY4gpwhJAEj+Z5C0Ff5TCwAAsFlPyakioV1I+nPYaUTDTqMZupgismCkLymW9ClsNf/6SjiCPCMkAeA7IOl57g8AAOzJThNpKh8hiZTMePiboOQwNvtmpmQ2Tl4+mLrvjqa90EUAuxCSANXmLSAZdhotcXINAAC5lsOQRCIo2clmjLSHnUYs6U/l6z3XvS3hAgqBkASoLp8zSHoe+wIAAEdaCUkew1bym9WgpBW6mDxYW0qTt2BEkm4JR1BEhCRANXkJSIadRk352BgMAADsoTuazrujaVP52Lh13TtJfw07jXjYafSqeOrNsNNoDjuNsaT/p3wtpVn1sTuaDkIXARyLkASoHl8zSHqe+gEAABnK0ek2m1woObb2/w07jUnZZ5UMO42aBUKxpL8l3QQuaRtOq0EpEJIA1eIrIGl56gcAAGTMQpIvoevY4YOSWSXzYacxLktYshKKzCS9KAmE8raMZtVC0nvCEZQJIQlQHf913YE9mPP8Qg4AAHbojqb9lQ1A8+xMycyKm2GnsZAUSZpIirqjaRyurP3ZRrRNJR8wXYes5UCvklo2mARKpTuazuyxGcn/krZlSNLk8QW45TwgkdT20AcAAHCsO5qObSZDpHzuebHuTMnMkg+SNOw0XpXUHkma5WWgsRKI1O2/RfjdrnuS1LQNfoFSIiQBys9HQNLy0AcAAPDABgh1JbMyijS7QUpmtN7Yl2yGycy+4uW/XQ3y7fd2rp9hSE3F+x1uwjG+qAxCEqDcnAYkLK8BAKB8uqNpbAOEgfK9UeguZ0pOxPnlpL1hpyElMyLm9jVbu120oa1zJaHHpv+vq5izQnZZSOqx3wiqhpAEKC/XM0iajtsHAAAB2CyL9rDTiJQEJWULAFZndnxYu+6zz0Jy6klSmwEaqoqQBCgn16fYtBy3DwAAArLZA00lA2ZUw72S/UZmoQsBQuJ0G6B8XAck73Z/CwAAKLKVQcLXsJXAsYWkP7qjaZvNWIEEIQlQLs4CEptyBgAAKqA7ms67o2lP0h8KM1CAW4+S6t3RdBK6ECBvCEmA8nA5g6TpsG0AAJBDNoCuSXoIWwkyspB02x1Nm93RNA5dDJBXhCRAObgMSOoO2wYAADlls0lakt5Leg1cDo73IKnWHU0HoQsBioCQBCg+AhIAAOBEdzSNlLwf+BK2EhzoVdL77mjaYq8R4DCEJECxOQlIhp3GuaQLF20DAIDisNkkfUmXSvaxQH4tJH3pjqY1C7cAHIGQBCguVzNI6o7aBQAABdQdTePuaNoUy27y6l7Jcpp+6EKAMiAkAYqJgAQAAHjTHU2j7mhak/RRBCV5cC/pkqN7gewRkgDF4yogOXfULgAAKIHuaDomKAlqNRiJQxcDlBUhCVAsrgKSpqN2AQBAiRCUeEcwAnhGSAIUh8tTbAAAAPayFpSwmWu2FpK+imAECIaQBCgGVwHJO0ftAgCAErOgpKlkM9f7wOUU3auSwKnWHU17BCNAWIQkQP79N3QBAAAA6+yY2WjYafQktSX1JF2Eq6gwFpImksYc1QvkT3c0nQ07jaakSElo4dMyJGl67hcoDAISAACQW3ayykDSwD75bNuX74FF3j0oCUYmnEYD5FseQhLPfQKFkXlAQiIJAABcsOnpPUm9YafRktRSMl29qjNLCEWAgspBSAJgA2aQAACAwumOphMl4YBsZknLvq4DleTDq5LB1ERSRCgCFFvgkATABgQkAACg0GxmyUxSf9hpnCuZVbL8KnJgslAycIqUBCKzkMUAyB4hCZAvBCQAAKA0bFbFxL4k/bv8tympLqmmfIYmCyUhz/Ir4tQZoBoISYD8ICABAACltjwRZ/UyG4yc62dosvxyvZ/Jk6S5khAkXv6XMASoNkISIB8ISAAAIXxx2HbksG2UxMoRuJP162yZTn3louYRXcyVhB+SNGd5TO5FBWsXJbQSkrQClwK4MFYBnhP/8+PHj0wbtAf135k2Cvz0fuVNLQAAAAAAmfi/0AUAAAAAAACERkCCopmHLgAAAAAAUD4EJCgU1nADAAAAAFzIPCBhfwgAAAAAAFA0zCABAAAAAACVR0CCInkKXQAAAAAAoJxcBSSPjtpFtc1DFwAAAAAAKCdmkKBI4tAFAAAAAADKyVVAMnPULqotDl0AAAAAAKCcXAUkc0ftotri0AUAAAAAAMrJVUASOWoX1RaHLgAAAAAAUE6uApLYUbuosO5oGoWuAQAAAABQTk4Cku5oGktauGgblfUaugAAAAAAQHm5PMVm5rBtVM8sdAEAAAAAgPJyGZBEDttG9UShCwAAAAAAlBczSFAUs9AFAAAAAADKixkkKAQ2aAUAAAAAuOQsIOmOpnNJT67aR6U8hC4AAAAAAFBuLmeQSMwiQTai0AUAAAAAAMrNdUAycdw+qiEKXQAAAAAAoNz+8+PHD6cdDDuNuaQzp52gzF67o2ktdBEAAAAAgHJzPYNEYhYJTjMJXQAAAAAAoPwISJB349AFAAAAAADKz/kSG4llNjgay2sAAAAAAF74mEEiMYsExxmHLgAAAAAAUA2+ApKBp35QLuPQBQAAAAAAqsFLQNIdTWeSnnz0hdJ47I6mcegiAAAAAADV4GsGicQsEhxmELoAAAAAAEB1+AxIJpIWHvtDcb12R9NJ6CIAAAAAANXhLSDpjqZzMSsA+xmELgAAAAAAUC0+Z5BIDHyx20JszgoAAAAA8MxrQGKzSO599onCGdj9BAAAAAAAb3zPIJGkfoA+UQwLMcsIAAAAABCA94DEjm796rtfFAKzRwAAAAAAQYSYQSIls0g40QarXsXsEQAAAABAIEECEk60wQZ9Zo8AAAAAAEL5z48fP4J1Puw0YkkXwQpAXjx1R9N66CIAAAAAANUVaonNUjtw/8iHXugCAAAAAADVFjQg6Y6mkaSHkDUguK92PwAAAAAAIJjQM0ikZBYJG7ZW06s49hkAAAAAkAPBAxLbmLMduAyE0WZjVgAAAABAHgQPSCSpO5pOxFKbqmFpDQAAAAAgN3IRkJi2kiUXKL8nsbQGAAAAAJAjuQlIWGpTGQuxtAYAAAAAkDO5CUikf0+1uQ1dB5zqdUfTWegiAAAAAABY9Z8fP36EruE3w05jLOkmdB3I3H13NG2HLgIAAAAAgHX/DV1Aip6kuqTrsGUgQ0+EIwAAAEhzVbtsKllyX7OL5pIGz/FLtOM2zeX/P8cvfQelAaiIXM4gkaRhp3EuKZZ0FrYSZOBJUpN9RwAAyJer2uW5kg+lNomf45fYUb9N331WwVXtsq2fAcNMO8KFPLmqXY6VPoP8/jl+ae9xu8Vz/HKedW15sOOxKl9/56vaZU0/A6xgdaB6tjwGMn3dyOsMEnVH0/mw02hKikRIUmRsygoAQH7VJf2dct3rVe2y/hy/zB30m9bnF3HS3VGuapcDSZ9WLrqQ9OGqdvnHc/wyCVLUnqz2bcvrb65ql7Pn+GWw4brayr9n2VWVO+dKf9zoqnb58Tl+GXuoYyDpQ8p1j1qZzQNkrK7Nj4FMXzdytUnrOtvMsxm4DBxvoWTmyCx0IQAA4GAXksahi8Bu9qn+p5SrB/4qOdyO2lfdrc88sk+U361cNM+orNyxT8gft3xLy3UN9rdKC0ckni9QArkOSKR/Q5KPoevAwQhHAAAovg+2bAP51tpy3YWvIo7UW/v/++f45T+S/j9J92vXTa5ql/Utt42yLCyHxluu+2ABhkutLdctPM1gAZzK7RKbVd3RdDzsNCTpz9C1YC+EIwAAlMfAljfMQheSFzaTYdNU78fn+KXptZjEPECfWWmu/Pt1udeILe1q26B/OUvkTFJk+46c6/dlOWNnVebAc/wytuVIadsPtOV2iVpvy3Vjh/0iA1e1y02bj4Z6zsqt3M8gWeqOpmMxk6QICEcAACiXMzH4ybuJkvdgm2xblpEHq6dWTjZc39avP9uZkiU56+HIV0f75eTNeMt1bVedWii4bTbSwFXfgE+FCUikf0OSP5T+AoCwCEcAACina/vkGjlkwUBvw1WvKZfnwoYlIdH699jeG01tf///9By/9DIqK+8GW6672HJC1KnaW6575PQplEWhAhJJ6o6mE+1+koR/hCMAAJTbp6vaZSt0EdjM9n+4VHKiwxdJt5LqOV8ada5khsvyK970TfYzNPX7bJiFpC/P8UvdUX25s8dmre2s+7TNcFtbvmWcdZ9AKIXYg2RddzSd2RHAE+V/46kqeJLU6o6mcehCAACAU+Or2mWtIksZCscGz/3AZextJfjY+3ttsF6XFFd41sJYv57es6p1Vbs8z/gx2lL6vicLbV4aBRRS4WaQLNlMhbqSwTnCeVAycyQOXQgAAHDuTAyGENBz/DJ/jl+iCocjy9lCabPpz5T9kb+9LddNCExRJoUNSCSpO5rOu6NpXb8fAQY/vnRH01Z3NJ2HLgQAAHjz7qp22Q9dBFBx4y3X9bLqxPaJud7yLYOs+gLyoJBLbNZ1R9P2sNOIlDxA06Z/ITsLSW3bDwYAAJTTg6QPKdd9vqpdTnK+v0UprWzCOfP5yf1V7bKuZM+QcyWzuCO7yslSFxuY1+x/60r2J5nb/3v72Vd+38taYt81pBgoOc1nk2tbChdn0E9vy3VPxz4HpP1en+OX6Jj2Tui/ruR+FSvgsq21+3tTjh9frqwsgZPy95jZy39+/Nh0HHIxDTuNupI0dVvKidM8KglH4tCFAACA09gg4e+Uq98r2c8iba+DVyWbgM6P6DftDeiX5/ilv+V20abLn+OX5qE1WHttbd7Usrcc+FkwMFi7/lyb328uJM02XD5bP2VlS99jW0Kx+r1NJQPV1cDq/epgcp+f5VDWZkvpQdnSch+KyXP8Mjmyr3Prq6VkgLjrQ88nJYPIQZYDSBuotpT8LneNKZzUsC97PKQ9Pr9mcbLPVe1yrvS/xcf1++qWds6V/E7b2v17fVQypst0+c6e9+dXJfflX/6mKc8D0obH9gH1NJX8Ppravq/mq5L72XjfACnluXLTfSXtOWvv51XbvLul3T+H9PNnGRz6vLTl9Wrr68ahSjGDZGm5L8mw0+hL+hy2mlL60h1N+6GLAAAA3rSUfPq3aYB0oWTA0PZWTfpg8Fi1lDbP1/69b79nB3xvWt/R8h8rg7J92kxr73zPev51VbvsKQnH9p2ZfSbpRtLNVe3ySUkoE+3Z17mS8Kd3QH9SMsi+VnK60r31OT/g9pvqGCj5OY6toe85KBlry2atOnGpjQ18T9qcdeXve8jY7J19Da5ql/3n+GVwwG031dBU8rva53CPCyUzcz5d1S5XB97nyuj5x+rpH9DehX4+vh61X+jp4jnrFxY49XXYoSnrP0s7bzNkCr0HSRobxL9XklDhdE+S/kc4AgBAtdiAs73lW27sTTIyZr/XSNmHQtv6rF/VLmeS7nT8svVrSX/vs0+NDcBjJYPnU5bJ30iKLFA62Eodh4Qjm2qY+Xw87Nis9SKDY7nbW67bObvD/h4zHf/B9Zmku6vaZWRBy8Hsfvi3jjv59PNV7XJ2bN8p9QysnmMf1+8k/WMhZhArzxN/6rQTZd8peczUs6grK6UMSCSpO5pG3dG0puQceBxnIem2O5rWbXYOAACoGFsy8XXLtwxsWQIyYoPsP+Vxbz0bpETKbqn656va5XhLfwNJfym7n/Fa0uTQwaz9rrOq40zSn9t+bge29dU+tlH7PW5bijLYcfu2pH902gB66aiBtP0dTl1VcK3kcXF+SiNXtctzW/aStm/Moe48388k/fJ3zep54kwnhJsulDYgWbJZD5dK1rJhf/eS6t3RdBC6EAAAEFxfyYzSTTj6N1stJeGINyvhyL4hwb6ztG82zSSxcGTXQHGh5P378ivt/rdquexrLytB1L7SZmusu7Gf0Ydt/Xw4YfZDe8t1Wzdn3fP3+qQkeP1iX/fa/je+kDTe9+exGg6ZEbTtb3ut7UHUPiJtnzWyvL9/Wfl63FHXxseXKzYjaZ/Hy+Pa1y5nOv33m5lS7UGSxjYUbQ47jaaSJxE2cU33KKnfHU2j0IUAAIB8eI5f5itLPjYNoq+vapeDLDaFzKFYv89Irmnz4OtVm9/oxwf0l/Y+9UG/bqZ4SJupbMAZaXs48qTkPXS0tnHluZKNGXtKH/zNN1w20eaAZKHk9zfeNABf2ci1r/SZCTe2b0Wccv2yraZ2D/butWFjTAuU2vaV9nv7dFW7jI7dtHZfz/FLbHs5pP3+2zruKN7elutS29uymenS1r1abDbaQJtnryyDitaW9lfb2OZVyf1o/T5d08/79Opj8egZRhaWpT2uF0r2FBlvuX1b6ff5z3Y/i9Yu37SKYtNsmrTnrE1mSurd9Lu415ZNmi1c6Sn9fnp9Vbts77vpr0uVCEiWbNBfH3YabR2+oUzZvSo5nSYKXQgAAMif5/hlZp9W3qV8yyc7+jfyV5V7Nnjqr15mg+tNAUmc5WkKSgYjAyUnPswzbHfVWNs34kwdvFlNEyVLW5r279W2Np5y8hy/RFe1y/VjpHdutGrXjZXMJBgrfYZAT1sG+Ba0/FbXiidJrbRBvIU3PRv4jpU+6BvbcbvzLX1lYVsNbR0YkFjIkTZO2rU561ib708LJb/TaFvf9jtvWSgw2NDWh6vaZWtH8NRPqWHpNm3jV+t/rORv19T+m7tuZG2kzZZ6VPI7mW9r4zl+GV/VLidK30R4rJ9H6i5v099Qy6aAZO/nLAvjBvo1aNlro1X7e01s75S015CWcjCTpPRLbDbpjqZj25/ko9jI9VHSH93RtEY4AgAAtrFBxcOWbzl4DwikepBUe45f+q4G2DZ4S9tnYiGpue8nujbwbernkoBdR8C27XsX9r3tQ37O5/ilrfTp+/UdN+8pfdD7pOTnjveoIbajUO9TvuVMa+GaCzs2a70+Yn+H3pbrUjdntVAjbaZE85Dw1H6mdsrVg7Tb2QyQbUtrPu57Ko7VW9d+y7vSjFMuf3qOX5r73uef45e53ec3Pf9e+Nq01cKU5e/j1n6G+IDbD5S+p9W2PW+8qWRAsrQSlLxX9fYoeZD0vjuaNruj6SR0MQAAoDDaSh+MsR9JNu6f45ednyxnoLflutYeR4n+wr6/Ken9rmDFfraeDghhNuinXL7rhJBeyuWvVs/8wDp6Sh9Etz2FhpMt1/X2bWRlGVOawZbr+imXfzn0viT9O+tg01KRiy2nBfW2NPnl0Pua3ReaOiIksRo3BXELa/MYbW1+/u0d2d4xejogaNqgn3ZFHjb8rnRAsmQn3jSVbOb6VftvwFQ0r0qeZC67o2mLGSMAAOBQNmBobfmWdyGPoCyBB/uk2CkbiKR9Yvv12KVSz/HLbN/bPscvG/caOaCvvfpZZYPWtOUXW5f4bKljrvQB6plOOE3mAIMt17UOaKel9N9P6uastsfEpjDg9cRlZwNtHpu1Ur4/7fKj69jx992mnXL50Uvm7Hb9DVdlcazzvjVEp+wVYj9D2uSE2rHtZoWAZEV3NI27o2mvO5qeS/pDyXS5ooclCyU/x3IZTd82rQUAADiKDUy3Hf17l6djGwtm5qmf1pbr+p5qyMKhs8BbKZc/nbKhqj0m0mpJ6zMzFlyknjS1ZcbFum3fN9hyXeuI2+y0ss/Nut/CPQv90pZO9U+p41A2EydtJtPgxObHKZc3T2wXqtgmrYewZScTSRp2Gi0lD/qWPJ5Hf4JXJbuRT1g+AwAAXHiOX3q2h0XangOTq9pl3cMyERynmXL5Q6i/md2fmhuumkmaHbLXwRab2pey2RxyrM2D4l1LfrIyUPrJPG3t+BktYEirddfmrM2Uy7fdZl8TbdhX5Kp2ub6vSW1HGz41Uy4/+fFlp4ptOrkorU+nLAxvSjpfu2qm7B633hCQ7GEtLKkruQO0lGzak4fAZKEkEIkkRd3RdBayGAAAUBktJW+CN70fulAyYGt7qwaHqKdcPvFYw3JQ3tceH0Re1S6Xxw2nbhS6R19pfUSHtrfBRCkBhYWFswz62NX/QJt/xnd2ok685fa9bW1v2Zz1XCl7bWQ0OJ6lXN7Ur3+3Zsr3PQUI/eopl88yaj/S7wFJWlidOfub9+xr1+N2eZSwy9O4MkNAciALH2ayqVEWmKx/uQxNFtZ/JCmWNCMQAQAAIdixjz2lf2p9c1W7PGm9OpxJW4oQ+yrAjo3edPRommsl97X+Ve2yd8SSmFraFVmEF/bJ/qs2/27PT21/z/4nSj/Fpa3tS01aW64bbLmunnbFVe0y2nI7X+IAfTZTLm/bTKlT1TZd6COIs71Oxtp/zHuh5HHeu6pd9k/Y3NULApITrQQmvxh2Gk375/K/59p95NiqmaS5/TuyvqKDigMAAHDsOX4Z2xvmtA0/BxaSxP6qwrGO3Zz1UFe1y7G2H8e6zYWkv65ql5tOODlGlqdZxtockNSVzSyVXQY6IiDZssmqlGxwOjuiljO5XV7U3PP7Zg5rONSF0n/PWTh32PZyk+O0QHyXMxVgfyoCEkdWwoxoy7cBAACUQVvJIGTTG//l0b91b9Ug12zmyK5w5FVJ2BAr+bT8XL8vIThk9klo5z46eY5fZrYUadNyi4sN+3Ystbc0O8igNBSchWi7wpHlaodYP2e5rIdkxwajXhCQAAAA4CQ2tb8l6Z+Ub7m+ql0OnuOXnr+qkEe2D8i2YONBUn/TjAXb96ClZBaEy0/hXZh77Gug7Zu1RqsX2O81bQaYlM0Gtii+wZbrnpQckx1tutJeH3ryt2Hx0QhIAAAAcDL75PqL0ge/n65qlxNfSzhwnC0zDLLS23Ldx2371dgGj2NJY9v75i6jmrIctNVSLp9l2McuE6Vv1npj+7fMVy5rb2nr/sSNNbNaBrVJvOf3NR3WcKhHuV1hELto1JbWpIWS98/xS3vb7W2/oMkR+5d4R0ACAACATDzHL33bgDBtwDmxGQQIL20z0Zrjflspl98fspnvc/wyuKpdznXYfghx2hV7nPCy05bTXLzaY7PWln6dFdLb0tx4y3VL8ZZa+nvcPivzlMtrHmtYmmnz8+DM8+8kK62Uyx93hSOrnuOXib1GRMppSPJ/oQsAAABAqbSVrEPf5ExM18+LWcrlTVcd7ggQ+oe2Z4HK3husWgCSdt9sHtr/IW0EmDk12HJdb/kP2zBz2+as0a6OtgVLGZ3Ysq9ZyuUXATYGnaVc3vRYQ5bqKZcPDm3Ils/Nji/FLQISAAAAZMYGS+0t37JtrwP4E6Vc3rIgw4V6yuVPHk85ilIub2fQdivl8qcM2j6IDULT+r1emcnV29LM4IAuH1Iubx/Qxkl2hDltT2UsRSmXXxd0Ft3GEO2Io7Zzj4AEAAAAmbI3zfeh68BWk5TLz7R90OzC3GNfk5TL350y28EGvWlLWsbHtnuiwZbrevbf1pbvGR/Q1yTl8pbnQCBtRlH7xDoOuq0Ffq8pV/dPqAOOEZAAAADAhZ48fXJ+zMDWZkm0My6lMGwAlzaY7B27JOGqdlk/4rbnx/R1pInSl9kMTmh3vKPPECZK/1nbtvFm2j4Qh27OmtbXmfweEzxJufzoOuz+fMxt025z43npEQ5AQAIAAIDM2eCqnXGzqYO9QxqxcCRSDjbUDGyQcvmZkpNizg9pzL5/LCnaFJJsWQLhbdnBykk4aXWkXZfKbpO2MfG9x+VDv7CfdZJy9a7AYHxEX2m3+WCnDh3tqnY5thNQdhkr/Xniw6F/X+sz0nEbim6rZXLKvigWREYZLIfbt4aNs2H2/JsUCgEJAAAAnLB9EG4zbHKWcvnen8jaG/pY0nUWBa1553D/jszZUqi0WSTXkmb7DuLs+yK73ZmSkKS54VvTZhX19+lnrc+2jjuit6/0geuNDcbP9+j/3AbcaUtrFgq/nGKw5bq0Qf9em7Nu0Ff67/XuqnbZP7TBq9pl7ap2GSn5He/8u1hQM9jyLTcWLNT26Hci6S8dedqK1dJPuXr5GKkf2q6FTZGS+35a+/s62zOcjFIuP7h/+5nrh97OFwISAAAAOPMcvwx0wEkjO8y2XPf3Ve2yv2kAZQPZtg20jh7wLO0YPA7W+q7bQCuv2kof1F5I+scCg/qmb7CB5EDSP/o1dDpT8jdpr91knNLXzSGzDOx7Dzni9197zG66URIO9bbdn5TcH9PCEUnqh5o9srRjs9Y0gyP7mmv77/XzVe1ytk+YafersaQX/QzBzrTfcqWB0vf/kLX3clW7nNjfuLny1bPH64sy2FB6x/PfmZLH12CfkGLlOexOP5/DPmUwi2Oyej9fCaVWjVNue9CsqxNn5Hjx39AFAAAAoPRaSmZtnPqmeCzp05brPysZhD3p58af53IzW2ShzT/PcjZLvNr3Ve2yboPVXHmOX+I9woYbJT/XQr+GVDXtXqZUX/v/sZJPnTf97u7sd9ff9LuyQVzLbn/S8qjn+GVyVbu8V3rAcaFkIHp35P3p3gbHeTBW8rMc8v1Hsd/rV6U/Tq+VBGevSgbKsX7OTmgq+f22lP73fXdVu+xt+90+xy/zPQfiH7R/CPKo42YrScnPM1P6z/RJSdDxqJ+/k1jJ46um5DHUVPrPMr6qXdb22DMm7We4lhRf1S5n+vU5q7U8peY5fomsvk23v7EAtZ92qo39PXopt88VAhIAAAA4tTJg+fvEdmZb3qSv2mcA+6RkMLItcNlmou2D6/XBUFv+T4fZy3P8Mr6qXUq7Z2Sc6bABzpPWpuDbfaGtZCbPJh+U7BXxqmSQuHSuzX/XtKBqp+f4pW0/97ZZIErpd5v75/ilfUxNjoy1f0By6Oasv3mOX5Yzb7b9Xi9Wrv98QPMLpS/3WK1hdsosozX3Sn6HRz1/rTz/TbQ92Hun4wKEaM/vm2xpf9Nju6VfZ+z0lB46XUv6a0OIqi195hJLbAAAAOCcLUv5mkFTPaUvCdnXvZJPZOcntNE/8PtbJ/Tl3HP8Mpb0Xqf/bpceJDU3DbbtU+aPO25/oZ8DxnfaHFJ81PZlVztZkPHllDbWfM1ZOLJc+rLvsdvjjPpsK/n7ZHV/kpLAbe+ZWHaf/p+2L7fZZiHpYxZ/T6u5ruyWGy59eY5fWnuGWmMd9vdorf6P/QzNHW0sg5bVr3Vflf3vITMEJAAAAPDiOX7p6cSjf/d8k57mVdIfz/FLO4NPyWPtHuSvOvd1UsuxLMSqaf/B9CYLSbe7Bm02eP1Dx/0dnyT9z9o42XP80lcykD5l0PYq6b3dx/NovMf3HLs560b296nr9MHwq5Kgon7oni4rwcQXHXZfe1QSxowP6W9HLfPn+KWp5Hnj2NBm6VHSpd139+5fh81iO1vfe2jl+feY+pfPv4fU4B1LbAAAAKprrvTBy9xRn22lbwIZ79OATZ+vWTst7V5i8ShpvGGwE2vzzz/fs47xVe1ybnVsmzr/KKm3NrhL6zvecNk+0tqbH9LIcqNNO3Gkp+37Qax6UjIIH+8bPtl+FTXrp71HPw+SJmt/x9k+fe1Ry0xS0/ZAaWu/+9WypnHa3gt5YXtIPChZqpRm7KDfWMnvta7k79zUfven5VKa9b/3MTXMJfVtM+GWfdU31PGo5P40OCCImR9Rz1jJviFtq2XffVBelSx5OaS+3/q+ql3GSv7W2/4OT0qes2Yb2phJqln9/R3tLNsaKPlbzu2y39o185TLl9dl+Zy50X9+/PiRZXsAAACAVzaorev3wV8kaXbqbJEDamiuXRxLikKfZHKqlWM5e/q51OVVySArkhRn8TNaP00F/Duu1dPUz40yV82tnshnPWVhf+eaNh/1OlNyf5p5K2gPFgZs2s/kyyGzOLa039Tm5zDJ0f0/5fEWW1+zA9up6/fHyczaio+rMAwCEgAAAAA72WyZ5ayK2xyd0gI4ZUfZbtp0NpOABPnBEhsAAAAAW9kpHGdrl42VfGo80wnT/oE8WzleepPIWyHwgk1aAQAAAOzSXvv/OyWfqL9TclTybH1DRyCkq9plz4K9U/W0eT+aBcusyoeABAAAAMAuM/16Csirfj2R6EzJBpJAcBbW3Un6y/YPObadtqTPKVdPjm0X+UVAAgAAAGAr22ehruS41D+e45fac/xSl3S78m0XeT/KGJUxWPn3n1e1y7EtldmbneS0aWPWpf7BVSH32KQVAAAAwFEsEHlZueg9yw4Q0lXtsqdk9sgm90pmfkSbToVZOdmlp+3H1359jl96RxeJ3GKTVgAAAAC/sU/cJ5L6W0KP1tr/x84KAvbT3nLdjX3pqnYpSY92+bl+HmG9yxPhSHkRkAAAAADYpKdkE9a/r2qXj5LG+jUAaevXo09fOckGOdBUcrrMPoHHuwPbfrL2UVIssQEAAADwm6va5VybT+9Iw/Ia5IbtIZK2weoxvthePCgxNmkFAAAAsElbyWk1uyyUbNwaOa0GOICFGZdK9h051sJuf0k4Ug3MIAEAAACQyjaubOn3pQVzJXuUTDZteAnkhe2n01JyH64pOZFp0+yohZIjrWdKluls3MwV5UVAAgAAAAAAKo8lNgAAAAAAoPIISAAAAAAAQOURkAAAAAAAgMojIAEAAAAAAJVHQAIAAAAAACqPgAQAAAAAAFQeAQkAAAAAAKg8AhIAAAAAAFB5BCQAAAAAAKDyCEgAAAAAAEDlEZAAAAAAAIDKIyABAAAAAACVR0ACAAAAAAAqj4AEAAAAAABUHgEJAAAAAACoPAISAAAAAABQeQQkAAAAAACg8ghIAAAAAABA5f3/mimAdpER8lgAAAAASUVORK5CYII=";
+const INK="#1A1E1A",INK2="#2D3B2D",INK3="#5C6B5C",INK4="#8FA08F";
+const BG="#F4F1EC",BRD="#DDD5C8";
+
+function nomeGestor(){ return (window.DASH_USER&&window.DASH_USER.nome)||"Gestão"; }
+function iniGestor(){ return (window.DASH_USER&&window.DASH_USER.ini)||"G"; }
+const REPS=[
+  {n:"Ana Laura",i:"AL",r:"Interior SP",c:172,m:5},
+  {n:"Fabiano Lino",i:"FL",r:"Vale do Ribeira",c:64,m:5},
+  {n:"Pedro Mello",i:"PM",r:"São Manuel",c:55,m:5},
+  {n:"Paulo Rezende",i:"PR",r:"Franca",c:24,m:5},
+  {n:"Sérgio Marinho",i:"SM",r:"Limeira",c:18,m:5},
+  {n:"Fabiana Mancuso",i:"FM",r:"Garça",c:15,m:5},
+  {n:"Bianca Almeida",i:"BA",r:"S.M.Arcanjo",c:14,m:5},
+  {n:"Alex Zechel Terçoni",i:"AT",r:"—",c:0,m:5},
+];
+
+const COB={};
+
+const FRIOS30=[];
+
+const VISITAS=[];
+
+// PRÉ-CADASTROS (simulados — em produção vêm do Sheets)
+var PRE_CADASTROS_DEMO = [];
+
+var COMENTARIOS_DB = {};
+function calcDias(de,ate){if(!de||!ate)return 5;return Math.max(1,Math.round((new Date(ate)-new Date(de))/(864e5))+1);}
+function fmtDt(d){return d?new Date(d).toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"}):"-";}
+function parseVisitaDate(s){
+  if(s==null||s==="") return null;
+  if(s instanceof Date) return isNaN(s.getTime())?null:s;
+  s=String(s).trim();
+  var m=s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if(m) return new Date(+m[1],+m[2]-1,+m[3],12,0,0);
+  var p=s.split("/");
+  if(p.length>=3) return new Date(+p[2],+p[1]-1,+p[0],12,0,0);
+  var d=new Date(s); return isNaN(d.getTime())?null:d;
+}
+function fmtVisitaData(s){var d=parseVisitaDate(s);return d?("0"+d.getDate()).slice(-2)+"/"+("0"+(d.getMonth()+1)).slice(-2):"-";}
+function fmtVisitaHora(s){
+  if(s==null||s==="") return "";
+  if(/^\d{1,2}:\d{2}/.test(String(s))) return String(s).slice(0,5);
+  var d=new Date(s); if(isNaN(d.getTime())) return String(s);
+  return d.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit",timeZone:"America/Sao_Paulo"});
+}
+function getData(de,ate){ return null; } // substituído por useApiData
+
+function useApiData(de,ate,rep){
+  var [data,setData]=useState(null);
+  var [loading,setLoading]=useState(true);
+  var [error,setError]=useState(null);
+  var [visitas,setVisitas]=useState([]);
+
+  useEffect(()=>{
+    if(!de||!ate){ setLoading(false); return; }
+    setLoading(true); setError(null);
+    fetch(API_URL,{method:"POST",body:JSON.stringify({action:"getVisitas",representante:rep||""})})
+      .then(r=>r.json())
+      .then(res=>{
+        if(!res.ok) throw new Error(res.error||"Erro API");
+        var rows=Array.isArray(res.data)?res.data:[];
+        // Filtrar por período
+        var deDt=new Date(de+"T00:00:00"), ateDt=new Date(ate+"T23:59:59");
+        var filtradas=rows.filter(v=>{
+          var dt=parseVisitaDate(v.Data);
+          if(!dt) return false;
+          return dt>=deDt && dt<=ateDt;
+        });
+        setVisitas(filtradas);
+
+        // Calcular KPIs
+        var hojeRef=new Date();
+        var kpis={
+          total:filtradas.length,
+          hoje:filtradas.filter(v=>{var hd=parseVisitaDate(v.Data);return hd&&hd.getFullYear()===hojeRef.getFullYear()&&hd.getMonth()===hojeRef.getMonth()&&hd.getDate()===hojeRef.getDate();}).length,
+          pres:filtradas.filter(v=>v.Tipo_Atendimento!=="Remoto").length,
+          rem:filtradas.filter(v=>v.Tipo_Atendimento==="Remoto").length,
+          valor:filtradas.reduce((a,v)=>a+(parseFloat(v["Valor_R$"])||0),0),
+          fech:filtradas.filter(v=>v.Status_Negocio==="Venda realizada").length,
+          prop:filtradas.filter(v=>v.Status_Negocio==="Em negociação").length,
+          porTipo:{},
+          porRep:{},
+          porTipoRep:{},
+        };
+        filtradas.forEach(v=>{
+          var t=v.Tipo_Visita||"Outro";
+          kpis.porTipo[t]=(kpis.porTipo[t]||0)+1;
+          var r=v.Representante||"?";
+          kpis.porRep[r]=(kpis.porRep[r]||0)+1;
+          if(!kpis.porTipoRep[t]) kpis.porTipoRep[t]={};
+          kpis.porTipoRep[t][r]=(kpis.porTipoRep[t][r]||0)+1;
+        });
+        setData(kpis);
+        setLoading(false);
+      })
+      .catch(e=>{ setError(e.message); setLoading(false); });
+  },[de,ate,rep]);
+
+  return {data,loading,error,visitas};
+}
+
+const sh={background:"#fff",borderRadius:13,padding:18,boxShadow:"0 1px 3px rgba(26,92,58,.06),0 4px 14px rgba(26,92,58,.08)",border:`1.5px solid ${BRD}`};
+
+function Card({title,action,children,style}){
+  return <div style={{...sh,...style}}>
+    {title&&<div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
+      <div style={{fontFamily:"Nunito,sans-serif",fontSize:13,fontWeight:800,color:INK2,display:"flex",alignItems:"center",gap:7}}>
+        <div style={{width:3,height:14,background:O,borderRadius:2}}/>{title}
+      </div>
+      {action}
+    </div>}
+    {children}
+  </div>;
+}
+
+function KPI({icon,val,lbl,delta,up,ac,ib}){
+  return <div style={{...sh,position:"relative",overflow:"hidden"}}>
+    <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:ac||V}}/>
+    <div style={{width:38,height:38,borderRadius:10,background:ib||VP,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,marginBottom:12}}>{icon}</div>
+    <div style={{fontFamily:"Nunito,sans-serif",fontSize:28,fontWeight:900,lineHeight:1}}>{val}</div>
+    <div style={{fontSize:10.5,fontWeight:700,color:INK4,textTransform:"uppercase",letterSpacing:".8px",marginTop:3}}>{lbl}</div>
+    {delta&&<div style={{fontSize:10.5,fontWeight:700,marginTop:7,color:up?"#16A34A":O}}>{delta}</div>}
+  </div>;
+}
+
+function Av({ini}){return <div style={{width:30,height:30,borderRadius:"50%",background:V,color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:9.5,fontWeight:800,flexShrink:0}}>{ini}</div>;}
+
+function ProgBar({pct,col}){
+  return <div style={{height:6,background:"#F0EBE4",borderRadius:3,overflow:"hidden"}}>
+    <div style={{height:"100%",width:`${Math.min(pct,100)}%`,background:col||(pct>=80?V:pct>=50?O:"#DC2626"),borderRadius:3,transition:"width .7s"}}/>
+  </div>;
+}
+
+function Pill({txt,ok}){
+  return <span style={{background:ok?"#DCFCE7":ok===false?"#FEE2E2":"#FEF3C7",color:ok?"#166534":ok===false?"#7F1D1D":"#92400E",fontSize:9.5,fontWeight:800,padding:"2px 9px",borderRadius:20}}>{txt}</span>;
+}
+
+function Donut({data,colors,size=150,lbl="visitas"}){
+  var entries=Object.entries(data),total=entries.reduce((a,[,v])=>a+v,0),denom=total||1;
+  var angle=-Math.PI/2,r=size*.36,inner=size*.22,cx=size/2,cy=size/2;
+  var slices=entries.map(([l,v],i)=>{
+    var sw=v/denom*2*Math.PI;
+    var x1=cx+r*Math.cos(angle),y1=cy+r*Math.sin(angle);
+    angle+=sw;
+    var x2=cx+r*Math.cos(angle),y2=cy+r*Math.sin(angle);
+    var lf=sw>Math.PI?1:0;
+    var xi1=cx+inner*Math.cos(angle-sw),yi1=cy+inner*Math.sin(angle-sw);
+    var xi2=cx+inner*Math.cos(angle),yi2=cy+inner*Math.sin(angle);
+    return {l,v,c:colors[i%colors.length],x1,y1,x2,y2,xi1,yi1,xi2,yi2,lf};
+  });
+  return <div style={{display:"flex",alignItems:"center",gap:12}}>
+    <svg viewBox={`0 0 ${size} ${size}`} style={{width:size,height:size,flexShrink:0}}>
+      {slices.map((s,i)=><path key={i} d={`M${s.x1} ${s.y1}A${r} ${r} 0 ${s.lf} 1 ${s.x2} ${s.y2}L${s.xi2} ${s.yi2}A${inner} ${inner} 0 ${s.lf} 0 ${s.xi1} ${s.yi1}Z`} fill={s.c} stroke="#fff" strokeWidth={2}/>)}
+      <text x={cx} y={cy-4} textAnchor="middle" fontSize={18} fontWeight={900} fill={INK} fontFamily="Nunito,sans-serif">{total}</text>
+      <text x={cx} y={cy+13} textAnchor="middle" fontSize={9} fill={INK4} fontFamily="Nunito Sans,sans-serif">{lbl}</text>
+    </svg>
+    <div style={{flex:1,display:"flex",flexDirection:"column",gap:5}}>
+      {slices.map((s,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:6}}>
+        <div style={{width:9,height:9,borderRadius:2,background:s.c,flexShrink:0}}/>
+        <span style={{fontSize:10.5,flex:1,color:INK3,fontWeight:600}}>{s.l}</span>
+        <span style={{fontSize:10,color:INK4,fontFamily:"JetBrains Mono,monospace",fontWeight:700}}>{s.v}</span>
+      </div>)}
+    </div>
+  </div>;
+}
+
+function BarChart({data,colors,h=150}){
+  var entries=Object.entries(data),max=Math.max(...entries.map(([,v])=>v),1),W=48;
+  return <svg viewBox={`0 -16 ${entries.length*W} ${h+44}`} style={{width:"100%",height:h+44}}>
+    {entries.map(([l,v],i)=>{
+      var bh=Math.round((v/max)*h),x=i*W+4,y=h-bh;
+      return <g key={l}>
+        <rect x={x} y={y} width={38} height={bh} rx={5} fill={colors[i%colors.length]}/>
+        <text x={x+19} y={h+14} textAnchor="middle" fontSize={9} fill={INK4} fontFamily="Nunito Sans,sans-serif">{l.slice(0,8)}</text>
+        {v>0&&<text x={x+19} y={y-4} textAnchor="middle" fontSize={9} fontWeight={700} fill={INK}>{v}</text>}
+      </g>;
+    })}
+  </svg>;
+}
+
+function ExportBtn({de, ate}){
+  var [open,setOpen]=useState(false);
+
+  function baixarExcel(){
+    // Em produção: chamar API que gera o Excel do Sheets real
+    // Por ora, link direto para a planilha Google Sheets
+    window.open("https://docs.google.com/spreadsheets/d/182w1l7GfbfVUEahkQ8kYMh8IDcb807qUNuV10te36lY/export?format=xlsx&id=182w1l7GfbfVUEahkQ8kYMh8IDcb807qUNuV10te36lY","_blank");
+    setOpen(false);
+  }
+
+  function baixarPDF(){
+    // Em produção: gerar PDF via API com dados reais
+    // Abre a planilha para impressão como alternativa imediata
+    window.open("https://docs.google.com/spreadsheets/d/182w1l7GfbfVUEahkQ8kYMh8IDcb807qUNuV10te36lY/export?format=pdf&size=A4&fitw=true","_blank");
+    setOpen(false);
+  }
+
+  return <div style={{position:"relative"}}>
+    <button onClick={()=>setOpen(o=>!o)} style={{
+      display:"flex",alignItems:"center",gap:6,padding:"7px 14px",
+      background:open?V:BG,color:open?"#fff":INK3,
+      border:`1.5px solid ${open?V:BRD}`,borderRadius:8,
+      fontFamily:"Nunito Sans,sans-serif",fontSize:12.5,fontWeight:700,cursor:"pointer"
+    }}>
+      📥 Exportar {open?"▲":"▼"}
+    </button>
+    {open&&<div style={{
+      position:"absolute",right:0,top:"110%",background:"#fff",
+      border:`1.5px solid ${BRD}`,borderRadius:10,boxShadow:"0 8px 24px rgba(0,0,0,.12)",
+      zIndex:200,overflow:"hidden",minWidth:200
+    }}>
+      <div style={{padding:"8px 14px",background:BG,borderBottom:`1px solid ${BRD}`,fontSize:10,fontWeight:700,color:INK4,textTransform:"uppercase",letterSpacing:".7px"}}>
+        Exportar relatório {de&&ate?`· ${fmtDt(de)}–${fmtDt(ate)}`:""}
+      </div>
+      {[
+        ["📊 Excel (.xlsx)","Planilha com 5 abas formatadas",baixarExcel,V],
+        ["📄 PDF","Relatório para apresentação",baixarPDF,O],
+      ].map(([ico,desc,fn,cor])=><div key={ico} onClick={fn} style={{
+        padding:"12px 16px",cursor:"pointer",display:"flex",alignItems:"center",gap:12,
+        borderBottom:`1px solid ${BRD}`,transition:"background .1s"
+      }}
+        onMouseEnter={e=>e.currentTarget.style.background=BG}
+        onMouseLeave={e=>e.currentTarget.style.background="transparent"}
+      >
+        <span style={{fontSize:20}}>{ico.split(" ")[0]}</span>
+        <div>
+          <div style={{fontSize:12.5,fontWeight:700,color:INK}}>{ico.split(" ").slice(1).join(" ")}</div>
+          <div style={{fontSize:10.5,color:INK4,marginTop:2}}>{desc}</div>
+        </div>
+      </div>)}
+      <div style={{padding:"10px 16px",background:"#F0F7F2",fontSize:10.5,color:V2,lineHeight:1.5}}>
+        💡 Para exportar com dados reais em tempo real, conecte o dashboard ao Google Sheets.
+      </div>
+    </div>}
+    {open&&<div onClick={()=>setOpen(false)} style={{position:"fixed",inset:0,zIndex:199}}/>}
+  </div>;
+}
+
+function Topbar({title,de,ate,setDe,setAte,rep,setRep}){
+  var hoje=new Date().toISOString().slice(0,10);
+  return <div style={{background:"#fff",borderBottom:`1.5px solid ${BRD}`,padding:"12px 24px",display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:50,boxShadow:"0 2px 8px rgba(26,92,58,.05)"}}>
+    <div>
+      <div style={{fontFamily:"Nunito,sans-serif",fontSize:18,fontWeight:800,color:V}}>{title}</div>
+      <div style={{fontSize:11.5,color:INK4,marginTop:2,display:"flex",alignItems:"center",gap:6}}>
+        <span style={{width:7,height:7,borderRadius:"50%",background:"#16A34A",display:"inline-block"}}/>
+        {de&&ate?`${fmtDt(de)} → ${fmtDt(ate)}`:"Selecione o período"}
+      </div>
+    </div>
+    <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
+      <div style={{display:"flex",alignItems:"center",gap:6,background:BG,border:`1.5px solid ${BRD}`,borderRadius:8,padding:"5px 11px"}}>
+        <span>📅</span>
+        <input type="date" value={de} onChange={e=>setDe(e.target.value)} style={{border:"none",background:"none",fontFamily:"Nunito Sans,sans-serif",fontSize:12,fontWeight:600,color:INK3,outline:"none"}}/>
+        <span style={{fontSize:11,color:INK4,fontWeight:600}}>até</span>
+        <input type="date" value={ate} onChange={e=>setAte(e.target.value)} style={{border:"none",background:"none",fontFamily:"Nunito Sans,sans-serif",fontSize:12,fontWeight:600,color:INK3,outline:"none"}}/>
+      </div>
+      <div style={{display:"flex",gap:4}}>
+        {[["Hoje",0],["7d",6],["30d",29],["90d",89]].map(([l,d])=>{
+          var d1=new Date();d1.setDate(d1.getDate()-d);
+          var ds=d1.toISOString().slice(0,10);
+          var ativo=de===ds&&ate===hoje;
+          return <button key={l} onClick={()=>{setDe(ds);setAte(hoje);}} style={{padding:"5px 10px",background:ativo?V:BG,color:ativo?"#fff":INK3,border:`1.5px solid ${ativo?V:BRD}`,borderRadius:7,fontFamily:"Nunito Sans,sans-serif",fontSize:11,fontWeight:700,cursor:"pointer"}}>{l}</button>;
+        })}
+      </div>
+      <div style={{display:"flex",alignItems:"center",gap:6,background:BG,border:`1.5px solid ${BRD}`,borderRadius:8,padding:"6px 11px"}}>
+        <span>👤</span>
+        <select value={rep} onChange={e=>setRep(e.target.value)} style={{border:"none",background:"none",fontFamily:"Nunito Sans,sans-serif",fontSize:12,fontWeight:600,color:INK3,outline:"none"}}>
+          <option value="">Todos</option>
+          {REPS.map(r=><option key={r.n} value={r.n}>{r.n.split(" ")[0]}</option>)}
+        </select>
+      </div>
+      <button onClick={()=>window.location.reload()} title="Atualizar dados agora" style={{display:"flex",alignItems:"center",gap:6,background:BG,border:`1.5px solid ${BRD}`,borderRadius:8,padding:"7px 12px",fontFamily:"Nunito,sans-serif",fontSize:12.5,fontWeight:700,color:INK3,cursor:"pointer"}}>🔄 Atualizar</button>
+      <ExportBtn de={de} ate={ate}/>
+    </div>
+  </div>;
+}
+
+const NAO_CAD_DEMO = []; // dados demo removidos — painel agora usa dados reais
+
+function NaoCadastradosPanel({dias, lbl, visitas}){
+  var [open,setOpen]=useState(false);
+  var [clientesCad,setClientesCad]=useState(null);
+  useEffect(()=>{
+    fetch(API_URL,{method:"POST",body:JSON.stringify({action:"getClientes",representante:""})})
+      .then(r=>r.json()).then(res=>{ if(res.ok&&Array.isArray(res.data)) setClientesCad(res.data); }).catch(()=>{});
+  },[]);
+  var norm=s=>(s||"").toString().trim().toLowerCase();
+  var setCad=new Set((clientesCad||[]).map(c=>norm(c.nome)));
+  var grupos={};
+  (clientesCad?(visitas||[]):[]).forEach(v=>{
+    var nome=(v.Cliente||"").trim();
+    if(!nome||setCad.has(norm(nome))) return;
+    var k=norm(nome);
+    if(!grupos[k]) grupos[k]={nome:nome,cidade:v.Cidade||"",rep:v.Representante||"",tipo:v.Tipo_Visita||"",data:v.Data,qtd:0,_dt:null};
+    var g=grupos[k]; g.qtd++;
+    var dt=parseVisitaDate(v.Data);
+    if(dt&&(!g._dt||dt>g._dt)){ g._dt=dt; g.data=v.Data; g.tipo=v.Tipo_Visita||g.tipo; g.cidade=v.Cidade||g.cidade; g.rep=v.Representante||g.rep; }
+  });
+  var naoCad=Object.keys(grupos).map(k=>grupos[k]).sort((a,b)=>b.qtd-a.qtd);
+  var total=naoCad.reduce((a,c)=>a+c.qtd,0);
+  var unicos=naoCad.length;
+  var reps=[...new Set(naoCad.map(c=>c.rep))].length;
+  return <div style={{marginBottom:20}}>
+    <div onClick={()=>setOpen(o=>!o)} style={{...sh,cursor:"pointer",borderLeft:`4px solid ${O}`,background:open?"#FFFBF5":"#fff",transition:"all .15s"}}>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+        <div style={{display:"flex",alignItems:"center",gap:14}}>
+          <div style={{width:42,height:42,borderRadius:10,background:OP,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>🔍</div>
+          <div>
+            <div style={{fontFamily:"Nunito,sans-serif",fontSize:14,fontWeight:800,color:INK}}>Visitas a clientes não cadastrados</div>
+            <div style={{fontSize:11.5,color:INK3,marginTop:3}}><strong style={{color:O}}>{total}</strong> visitas · <strong style={{color:O}}>{unicos}</strong> clientes distintos · <strong>{reps}</strong> representantes · {lbl}</div>
+          </div>
+        </div>
+        <div style={{display:"flex",alignItems:"center",gap:12}}>
+          <div style={{textAlign:"center",background:OP,borderRadius:8,padding:"6px 14px"}}>
+            <div style={{fontFamily:"Nunito,sans-serif",fontSize:22,fontWeight:900,color:O}}>{unicos}</div>
+            <div style={{fontSize:9,color:M,fontWeight:700,textTransform:"uppercase",letterSpacing:".5px"}}>potenciais</div>
+          </div>
+          <span style={{fontSize:18,color:INK4,transition:"transform .2s",transform:open?"rotate(90deg)":"none"}}>›</span>
+        </div>
+      </div>
+      {open&&<div style={{marginTop:16,borderTop:`1px solid ${BRD}`,paddingTop:14}}>
+        <div style={{fontSize:11,color:INK3,marginBottom:12,lineHeight:1.6,background:"#FEF3C7",padding:"10px 12px",borderRadius:8,borderLeft:`3px solid #CA8A04`}}>
+          ⚠️ Estes clientes foram visitados mas <strong>não estão na carteira</strong>. Cada um é uma oportunidade. Oriente os representantes a usar a tela <strong>"🆕 Novo Cliente"</strong> no app para formalizar o cadastro.
+        </div>
+        <table style={{width:"100%",borderCollapse:"collapse"}}>
+          <thead><tr>
+            {["Cliente","Representante","Cidade","Tipo","Última visita","Visitas","Ação"].map(h=><th key={h} style={{fontSize:9.5,fontWeight:800,color:INK4,textTransform:"uppercase",letterSpacing:".7px",padding:"6px 10px",textAlign:"left",borderBottom:`1.5px solid ${BRD}`}}>{h}</th>)}
+          </tr></thead>
+          <tbody>
+            {naoCad.length===0&&<tr><td colSpan={7} style={{padding:"16px 10px",textAlign:"center",color:INK4,fontSize:12}}>Nenhuma visita a cliente não cadastrado no período.</td></tr>}
+            {naoCad.map((c,i)=><tr key={i} style={{borderBottom:`1px solid ${BRD}`}}>
+              <td style={{padding:"10px",fontSize:13,fontWeight:700}}>{c.nome}</td>
+              <td style={{padding:"10px"}}>
+                <div style={{display:"flex",alignItems:"center",gap:7}}>
+                  <div style={{width:24,height:24,borderRadius:"50%",background:V,color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:800}}>{c.rep.split(" ").map(w=>w[0]).slice(0,2).join("")}</div>
+                  <span style={{fontSize:12,fontWeight:600}}>{c.rep.split(" ")[0]}</span>
+                </div>
+              </td>
+              <td style={{padding:"10px",fontSize:12,color:INK3}}>📍 {c.cidade}</td>
+              <td style={{padding:"10px"}}><span style={{background:VP,color:V,fontSize:9.5,fontWeight:800,padding:"2px 9px",borderRadius:20}}>{c.tipo}</span></td>
+              <td style={{padding:"10px",fontSize:11.5,color:INK4,fontFamily:"JetBrains Mono,monospace"}}>{fmtVisitaData(c.data)}</td>
+              <td style={{padding:"10px",textAlign:"center"}}><span style={{fontFamily:"JetBrains Mono,monospace",fontSize:13,fontWeight:800,color:O}}>{c.qtd}</span></td>
+              <td style={{padding:"10px"}}><button style={{padding:"4px 11px",background:V,color:"#fff",border:"none",borderRadius:20,fontSize:10,fontWeight:800,cursor:"pointer"}}>📋 Solicitar cadastro</button></td>
+            </tr>)}
+          </tbody>
+        </table>
+      </div>}
+    </div>
+  </div>;
+}
+
+function PageDash({de,ate}){
+  // TODOS OS HOOKS PRIMEIRO (regra do React)
+  var rep=useContext(RepCtx)||"";
+  var {data:d,loading,error,visitas}=useApiData(de,ate,rep||"");
+  var [tipo,setTipo]=useState(null);
+  // Agora os returns condicionais
+  if(loading) return <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",height:"60vh",gap:16}}>
+    <div style={{width:48,height:48,border:`4px solid ${VP}`,borderTop:`4px solid ${V}`,borderRadius:"50%",animation:"spin 1s linear infinite"}}/>
+    <div style={{fontSize:13,color:INK3,fontFamily:"Nunito,sans-serif"}}>Carregando dados do Sheets...</div>
+    <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+  </div>;
+  if(error) return <div style={{margin:20,padding:16,background:"#FEE2E2",borderRadius:12,color:"#7F1D1D",fontSize:13}}>
+    ⚠️ Erro ao carregar dados: {error}<br/>
+    <small style={{opacity:.7}}>Verifique se o Apps Script está implantado corretamente.</small>
+  </div>;
+  if(!d) return null;
+  var dias=calcDias(de,ate);
+  var lbl=de&&ate?`${fmtDt(de)}–${fmtDt(ate)}`:"período";
+  var CORT=[V,O,M,B,"#9333EA","#CA8A04"],CORR=[V,O,M,B,"#9333EA","#16A34A","#CA8A04"];
+  var filtRep=tipo?((d.porTipoRep&&d.porTipoRep[tipo])||{}):d.porRep;
+
+  return <div>
+    <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12,marginBottom:20}}>
+      <KPI icon="📍" val={d.total} lbl={`Visitas · ${lbl}`} delta={`↑ ${d.pres} presenciais`} up ac={V} ib={VP}/>
+      <KPI icon="📅" val={d.hoje} lbl="Visitas hoje" delta={`Meta: ${REPS.length*5}/dia`} ac={O} ib={OP}/>
+      <KPI icon="💰" val={`R$ ${(d.valor/1000).toFixed(0)}k`} lbl="Valor negociado" delta={`↑ ${d.fech} fechamentos`} up ac={M} ib={MP}/>
+      <KPI icon="📞" val={d.rem} lbl="Contatos remotos" delta={`Meta: ${8*dias}/${lbl}`} ac={B} ib={BP}/>
+    </div>
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:20}}>
+      <Card title={tipo?`Tipo: ${tipo}`:"Visitas por tipo"}>
+        <div style={{display:"flex",flexWrap:"wrap",gap:5,marginBottom:12}}>
+          {["Todos",...Object.keys(d.porTipo)].map(t=><span key={t} onClick={()=>setTipo(t==="Todos"?null:t)} style={{padding:"3px 10px",borderRadius:20,border:`1.5px solid ${(!tipo&&t==="Todos")||tipo===t?V:BRD}`,fontSize:10.5,fontWeight:700,cursor:"pointer",background:(!tipo&&t==="Todos")||tipo===t?V:"#fff",color:(!tipo&&t==="Todos")||tipo===t?"#fff":INK3}}>{t}</span>)}
+        </div>
+        <Donut data={tipo?{[tipo]:d.porTipo[tipo]||0}:d.porTipo} colors={CORT} size={150}/>
+      </Card>
+      <Card title={tipo?`Reps · ${tipo}`:"Visitas por representante"}>
+        <BarChart data={filtRep} colors={CORR} h={150}/>
+      </Card>
+    </div>
+    <Card title={`Desempenho · ${lbl}`} style={{marginBottom:20}}>
+      <table style={{width:"100%",borderCollapse:"collapse"}}>
+        <thead><tr>{["Representante","Presencial","Remoto","Meta","% Meta","Valor","Status"].map(h=><th key={h} style={{fontSize:9.5,fontWeight:800,color:INK4,textTransform:"uppercase",letterSpacing:".8px",padding:"7px 10px",textAlign:"left",borderBottom:`1.5px solid ${BRD}`}}>{h}</th>)}</tr></thead>
+        <tbody>{REPS.map(r=>{
+          var vis=d.porRep[r.n]||0,meta=r.m*dias,pres=Math.round(vis*.62),rem=vis-pres,pct=Math.min(Math.round((vis/meta)*100),100);
+          var val=Math.round((d.valor||0)*((vis/(Object.values(d.porRep).reduce((a,b)=>a+b,1)))));
+          return <tr key={r.n} style={{borderBottom:`1px solid ${BRD}`}}>
+            <td style={{padding:"10px 10px"}}><div style={{display:"flex",alignItems:"center",gap:8}}><Av ini={r.i}/><div><div style={{fontSize:12.5,fontWeight:700}}>{r.n}</div><div style={{fontSize:10,color:INK4}}>{r.r}</div></div></div></td>
+            <td style={{padding:"10px",fontFamily:"JetBrains Mono,monospace",fontSize:13,fontWeight:700}}>{pres}</td>
+            <td style={{padding:"10px",fontFamily:"JetBrains Mono,monospace",fontSize:13,color:B,fontWeight:700}}>{rem}</td>
+            <td style={{padding:"10px"}}><div style={{display:"flex",alignItems:"center",gap:8}}><div style={{width:80}}><ProgBar pct={pct}/></div><span style={{fontSize:10,color:INK4,fontWeight:700}}>{vis}/{meta}</span></div></td>
+            <td style={{padding:"10px",fontSize:13,fontWeight:800,color:pct>=80?V:pct>=50?O:"#DC2626"}}>{pct}%</td>
+            <td style={{padding:"10px",fontFamily:"JetBrains Mono,monospace",fontSize:11}}>R$ {(val/1000).toFixed(0)}k</td>
+            <td style={{padding:"10px"}}><Pill txt={pct>=80?"✅ No ritmo":pct>=50?"⚠️ Atenção":"🔴 Abaixo"} ok={pct>=80?true:pct>=50?undefined:false}/></td>
+          </tr>;
+        })}</tbody>
+      </table>
+    </Card>
+    <NaoCadastradosPanel dias={dias} lbl={lbl} visitas={visitas}/>
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
+      <Card title="Tipos de visita · frequência">
+        {Object.entries(d.porTipo).sort((a,b)=>b[1]-a[1]).map(([t,n],i)=>{
+          var max=Math.max(...Object.values(d.porTipo),1),c=[V,O,M,B,"#9333EA","#CA8A04"][i%6];
+          return <div key={t} style={{display:"flex",alignItems:"center",gap:10,marginBottom:9}}>
+            <div style={{fontSize:11.5,fontWeight:700,width:110,flexShrink:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{t}</div>
+            <div style={{flex:1,height:7,background:"#F0EBE4",borderRadius:4,overflow:"hidden"}}><div style={{height:"100%",width:`${Math.round((n/max)*100)}%`,background:c,borderRadius:4}}/></div>
+            <div style={{fontSize:10.5,fontFamily:"JetBrains Mono,monospace",fontWeight:700,color:INK3,minWidth:24,textAlign:"right"}}>{n}</div>
+          </div>;
+        })}
+      </Card>
+      <Card title="Visitas recentes" action={<span onClick={()=>{}} style={{fontSize:11,fontWeight:700,color:V3,cursor:"pointer"}}>Ver todas →</span>}>
+        {(visitas&&visitas.length>0?visitas:VISITAS).slice(0,4).map((v,i)=>{
+          var ICOS={"Prospecção":"🔍","Pós Venda":"🤝","Fechamento":"✅","Negociação":"📄"};
+          return <div key={i} style={{display:"flex",gap:10,padding:"9px 0",borderBottom:i<3?`1px solid ${BRD}`:"none"}}>
+            <div style={{width:30,height:30,borderRadius:"50%",background:VP,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,flexShrink:0}}>{ICOS[v.t]||"📍"}</div>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontSize:12.5,fontWeight:700}}>{v.n}</div>
+              <div style={{fontSize:10.5,color:INK4,marginTop:2}}>{v.t} · {v.c} · {v.r}</div>
+              <div style={{fontSize:11,color:INK3,marginTop:4,lineHeight:1.5}}>{v.o}</div>
+            </div>
+            <div style={{fontSize:9.5,color:INK4,fontFamily:"JetBrains Mono,monospace",flexShrink:0,marginTop:3,whiteSpace:"nowrap"}}>{v.d} · {v.h}</div>
+          </div>;
+        })}
+      </Card>
+    </div>
+  </div>;
+}
+
+function PageTimeline(){
+  var [q,setQ]=useState(""),[tipo,setTipo]=useState("");
+  var [chatIdx,setChatIdx]=useState(null);
+  var [comentarios,setComentarios]=useState(COMENTARIOS_DB);
+  var [novaMsg,setNovaMsg]=useState("");
+  var [notifs,setNotifs]=useState({"1":1});
+  var chatEndRef=useRef(null);
+  var [visitasReal,setVisitasReal]=useState([]);
+  var [tlLoading,setTlLoading]=useState(true);
+  useEffect(()=>{
+    fetch(API_URL,{method:"POST",body:JSON.stringify({action:"getVisitas",representante:""})})
+      .then(r=>r.json())
+      .then(res=>{
+        if(res.ok&&Array.isArray(res.data)){
+          var mapped=res.data.map((v,i)=>({
+            id:v.ID||("VIS-"+i),
+            n:v.Cliente||"",
+            c:v.Cidade||"",
+            r:v.Representante||"",
+            t:v.Tipo_Visita||"",
+            h:fmtVisitaHora(v.Hora),
+            d:fmtVisitaData(v.Data),
+            o:v.Observacoes||"",
+            tags:(v.Tags||"").split(",").map(t=>t.trim()).filter(Boolean),
+            val:v["Valor_R$"]||"",
+            status:v.Status_Negocio||"",
+            atend:v.Tipo_Atendimento||"Presencial",
+            foto:v.Foto_URL||""
+          }));
+          setVisitasReal(mapped.reverse());
+        }
+        setTlLoading(false);
+      })
+      .catch(()=>setTlLoading(false));
+  },[]);
+  // Hooks primeiro (regra do React)
+  useEffect(()=>{if(chatEndRef.current)chatEndRef.current.scrollIntoView({behavior:"smooth"});},[chatIdx,comentarios]);
+  var ICOS={"Prospecção":"🔍","Pós Venda":"🤝","Fechamento":"✅","Negociação":"📄","Acomp.Técnico":"🔬"};
+  if(tlLoading) return <div style={{display:"flex",alignItems:"center",justifyContent:"center",height:"60vh",gap:12,color:INK3,fontSize:13}}><div style={{width:32,height:32,border:`3px solid ${VP}`,borderTop:`3px solid ${V}`,borderRadius:"50%",animation:"spin 1s linear infinite"}}/> Carregando visitas...</div>;
+  var base=visitasReal.length>0?visitasReal:VISITAS;
+  var fil=base.filter(v=>(!q||v.n.toLowerCase().includes(q.toLowerCase())||v.r.toLowerCase().includes(q.toLowerCase())||v.c.toLowerCase().includes(q.toLowerCase()))&&(!tipo||v.t===tipo));
+
+
+  function abrirChat(i){
+    setChatIdx(i);
+    setNotifs(n=>({...n,[String(i)]:0}));
+  }
+
+  function enviarMsg(){
+    if(!novaMsg.trim()||chatIdx===null)return;
+    var key=String(chatIdx);
+    var nova={id:"c"+Date.now(),autor:nomeGestor(),tipo:"gestor",msg:novaMsg.trim(),hora:new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})+"h",data:"Agora"};
+    setComentarios(c=>({...c,[key]:[...(c[key]||[]),nova]}));
+    setNovaMsg("");
+  }
+
+  var _baseVis=visitasReal.length>0?visitasReal:VISITAS;
+  var V_vis=chatIdx!==null?_baseVis[chatIdx]:null;
+  var msgs=chatIdx!==null?(comentarios[String(chatIdx)]||[]):[];
+
+  return <div style={{display:"grid",gridTemplateColumns:chatIdx!==null?"1fr 380px":"1fr",gap:16,alignItems:"start"}}>
+    <Card title={`Timeline · ${fil.length} visitas`}
+      action={<div style={{display:"flex",gap:8}}>
+        <input value={q} onChange={e=>setQ(e.target.value)} placeholder="🔍 Buscar..." style={{padding:"6px 11px",border:`1.5px solid ${BRD}`,borderRadius:8,fontFamily:"Nunito Sans,sans-serif",fontSize:12,outline:"none",width:180}}/>
+        <select value={tipo} onChange={e=>setTipo(e.target.value)} style={{padding:"6px 11px",border:`1.5px solid ${BRD}`,borderRadius:8,fontFamily:"Nunito Sans,sans-serif",fontSize:12,outline:"none"}}>
+          <option value="">Todos os tipos</option>
+          {["Prospecção","Pós Venda","Fechamento","Negociação","Acomp.Técnico"].map(t=><option key={t}>{t}</option>)}
+        </select>
+      </div>}
+    >
+      {fil.map((v,i)=>{
+        var key=String(i),nC=(comentarios[key]||[]).length,nN=notifs[key]||0,ativo=chatIdx===i;
+        return <div key={i} onClick={()=>abrirChat(i)} style={{display:"flex",gap:12,padding:"11px 8px",borderBottom:`1px solid ${BRD}`,cursor:"pointer",background:ativo?"#F0F7F2":"transparent",borderRadius:ativo?8:0,transition:"all .15s"}}>
+          <div style={{width:32,height:32,borderRadius:"50%",background:VP,display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,flexShrink:0}}>{ICOS[v.t]||"📍"}</div>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{fontSize:13,fontWeight:700}}>{v.n}</div>
+            <div style={{fontSize:10.5,color:INK4,marginTop:3,display:"flex",gap:8,flexWrap:"wrap"}}>
+              <span style={{background:VP,color:V2,fontSize:9.5,fontWeight:800,padding:"1px 8px",borderRadius:20}}>{v.t}</span>
+              <span>📍 {v.c}</span><span>👤 {v.r}</span>
+            </div>
+            {v.o&&<div style={{fontSize:11.5,color:INK3,marginTop:4,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{v.o}</div>}
+            {v.foto&&<div style={{marginTop:6,display:"flex",flexWrap:"wrap",gap:6}}>{String(v.foto).split(",").map(s=>s.trim()).filter(Boolean).map((u,k)=>(<a key={k} href={u} target="_blank" onClick={e=>e.stopPropagation()} style={{fontSize:10.5,fontWeight:800,color:V,background:VP,padding:"3px 9px",borderRadius:8,textDecoration:"none"}}>📷 Foto {k+1}</a>))}</div>}
+          </div>
+          <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:6,flexShrink:0}}>
+            <div style={{fontSize:9.5,color:INK4,fontFamily:"JetBrains Mono,monospace",whiteSpace:"nowrap"}}>{v.d} · {v.h}</div>
+            <div style={{display:"flex",alignItems:"center",gap:6}}>
+              {nC>0&&<span style={{fontSize:10,color:INK3}}>💬 {nC}</span>}
+              {nN>0&&<span style={{background:O,color:"#fff",fontSize:9,fontWeight:800,padding:"1px 7px",borderRadius:20}}>{nN} nova{nN>1?"s":""}</span>}
+            </div>
+          </div>
+        </div>;
+      })}
+    </Card>
+
+    {chatIdx!==null&&V_vis&&<div style={{position:"sticky",top:80}}>
+      <div style={{...sh,padding:0,overflow:"hidden"}}>
+        <div style={{background:V,padding:"14px 16px",display:"flex",alignItems:"flex-start",justifyContent:"space-between"}}>
+          <div>
+            <div style={{fontFamily:"Nunito,sans-serif",fontSize:13,fontWeight:800,color:"#fff"}}>{V_vis.n}</div>
+            <div style={{fontSize:10.5,color:"rgba(255,255,255,.7)",marginTop:3}}>
+              <span style={{background:"rgba(255,255,255,.2)",padding:"1px 8px",borderRadius:20,fontSize:9.5,fontWeight:700}}>{V_vis.t}</span>
+              {" "}{V_vis.d} · {V_vis.h} · 👤 {V_vis.r}
+            </div>
+          </div>
+          <button onClick={()=>setChatIdx(null)} style={{background:"rgba(255,255,255,.2)",border:"none",borderRadius:"50%",width:28,height:28,cursor:"pointer",color:"#fff",fontSize:16,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+        </div>
+        {V_vis.o&&<div style={{background:"#F8F5F0",padding:"10px 16px",borderBottom:`1px solid ${BRD}`,fontSize:11.5,color:INK3,lineHeight:1.5}}>
+          <strong style={{color:INK2}}>📋</strong> {V_vis.o}
+        </div>}
+        <div style={{height:300,overflowY:"auto",padding:"12px 16px",display:"flex",flexDirection:"column",gap:10,background:"#FAFAF7"}}>
+          {msgs.length===0&&<div style={{textAlign:"center",padding:"40px 0",color:INK4,fontSize:12.5}}><div style={{fontSize:28,marginBottom:8}}>💬</div>Nenhum comentário ainda.</div>}
+          {msgs.map((m,i)=>{
+            var ig=m.tipo==="gestor";
+            return <div key={i} style={{display:"flex",flexDirection:"column",alignItems:ig?"flex-end":"flex-start"}}>
+              <div style={{maxWidth:"82%",padding:"9px 12px",borderRadius:ig?"14px 14px 2px 14px":"14px 14px 14px 2px",background:ig?V:"#fff",color:ig?"#fff":INK,fontSize:12.5,lineHeight:1.55,boxShadow:"0 1px 4px rgba(0,0,0,.08)"}}>{m.msg}</div>
+              <div style={{fontSize:9.5,color:INK4,marginTop:3,display:"flex",gap:5}}>
+                <span style={{fontWeight:700}}>{m.autor}</span>
+                <span>·</span><span>{m.data} {m.hora}</span>
+              </div>
+            </div>;
+          })}
+          <div ref={chatEndRef}/>
+        </div>
+        <div style={{padding:"10px 12px",borderTop:`1px solid ${BRD}`,background:"#fff",display:"flex",gap:8,alignItems:"flex-end"}}>
+          <textarea value={novaMsg} onChange={e=>setNovaMsg(e.target.value)}
+            onKeyDown={e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();enviarMsg();}}}
+            placeholder="Comentar... (Enter para enviar)" rows={2}
+            style={{flex:1,padding:"9px 12px",border:`1.5px solid ${BRD}`,borderRadius:10,fontFamily:"Nunito Sans,sans-serif",fontSize:13,outline:"none",resize:"none",lineHeight:1.5}}/>
+          <button onClick={enviarMsg} disabled={!novaMsg.trim()} style={{padding:"10px 14px",background:novaMsg.trim()?V:"#E0E0E0",color:"#fff",border:"none",borderRadius:10,fontFamily:"Nunito,sans-serif",fontSize:13,fontWeight:800,cursor:novaMsg.trim()?"pointer":"default"}}>
+            Enviar ↑
+          </button>
+        </div>
+      </div>
+      <div style={{marginTop:10,padding:"10px 14px",background:VP,borderRadius:10,border:`1px solid ${VM}`,fontSize:11,color:V2,lineHeight:1.5}}>
+        <strong>📱</strong> O representante é notificado no app ao receber sua mensagem. Respostas aparecem aqui com badge.
+      </div>
+    </div>}
+  </div>;
+}
+
+function PageReps({de,ate}){
+  var {data:d,visitas:visitasReps}=useApiData(de,ate,"");
+  var dCalc={total:0,pres:0,rem:0,valor:0,fech:0,prop:0,porTipo:{},porRep:{},...(d||{})};
+  d=dCalc;
+  var dias=calcDias(de,ate),lbl=de&&ate?`${fmtDt(de)}–${fmtDt(ate)}`:"período";
+  var mp=5*dias,mr=8*dias;
+  return <div>
+    <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12,marginBottom:20}}>
+      <KPI icon="👥" val={7} lbl="Representantes" delta="Equipe completa" up ac={V} ib={VP}/>
+      <KPI icon="🎯" val={REPS.filter(r=>(d.porRep[r.n]||0)>=(r.m*dias*.8)).length} lbl={`Meta · ${lbl}`} delta="de 7 representantes" ac={O} ib={OP}/>
+      <KPI icon="📊" val={Math.round(d.total/7)} lbl={`Média/rep · ${lbl}`} ac={M} ib={MP}/>
+      <KPI icon="🏆" val="Ana Laura" lbl="Líder do período" delta={`↑ ${d.porRep["Ana Laura"]||0} visitas`} up ac={B} ib={BP}/>
+    </div>
+    <Card title={`Desempenho · presencial meta ${mp} · remoto meta ${mr}`} style={{marginBottom:20}}>
+      {REPS.map(r=>{
+        var vis=d.porRep[r.n]||0,pres=Math.round(vis*.62),rem=vis-pres;
+        var pp=Math.min(Math.round((pres/mp)*100),100),pr=Math.min(Math.round((rem/mr)*100),100);
+        var ok=pp>=80&&pr>=60;
+        return <div key={r.n} style={{display:"grid",gridTemplateColumns:"170px 1fr 1fr auto",gap:14,alignItems:"center",padding:"12px 0",borderBottom:`1px solid ${BRD}`}}>
+          <div style={{display:"flex",alignItems:"center",gap:9}}><Av ini={r.i}/><div><div style={{fontSize:12.5,fontWeight:700}}>{r.n}</div><div style={{fontSize:10,color:INK4}}>{r.r}</div></div></div>
+          <div><div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}><span style={{fontSize:10,color:INK3,fontWeight:700}}>🏃 Presencial</span><span style={{fontSize:10,fontFamily:"JetBrains Mono,monospace",fontWeight:700}}>{pres}/{mp}</span></div><ProgBar pct={pp}/></div>
+          <div><div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}><span style={{fontSize:10,color:B,fontWeight:700}}>📞 Remoto</span><span style={{fontSize:10,fontFamily:"JetBrains Mono,monospace",fontWeight:700}}>{rem}/{mr}</span></div><ProgBar pct={pr} col={B}/></div>
+          <Pill txt={ok?"✅ Meta":"⚠️ Parcial"} ok={ok?true:undefined}/>
+        </div>;
+      })}
+    </Card>
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
+      <Card title="Visitas por representante"><BarChart data={d.porRep} colors={[V,O,M,B,"#9333EA","#16A34A","#CA8A04"]} h={160}/></Card>
+      <Card title="Funil · visitas → fechamentos">
+        {REPS.map(r=>{
+          var vis=d.porRep[r.n]||0,fec=Math.round(vis*.15),pct=Math.min(Math.round((vis/(5*dias))*100),100);
+          return <div key={r.n} style={{display:"flex",alignItems:"center",gap:10,marginBottom:9}}>
+            <div style={{width:80,fontSize:11.5,fontWeight:700,flexShrink:0}}>{r.n.split(" ")[0]}</div>
+            <div style={{flex:1,height:20,background:"#F0EBE4",borderRadius:4,overflow:"hidden"}}>
+              <div style={{height:"100%",width:`${pct}%`,background:V,borderRadius:4,display:"flex",alignItems:"center",paddingLeft:8}}>
+                <span style={{fontSize:9.5,fontWeight:800,color:"#fff"}}>{vis}v</span>
+              </div>
+            </div>
+            <div style={{fontSize:10,fontWeight:800,color:INK4,fontFamily:"JetBrains Mono,monospace"}}>{fec}⚡</div>
+          </div>;
+        })}
+      </Card>
+    </div>
+  </div>;
+}
+
+function PageCobertura(){
+  var [filtRep,setFiltRep]=useState(""),[ord,setOrd]=useState("dias"),[busca,setBusca]=useState("");
+  var [visitasCob,setVisitasCob]=useState([]);
+  var [clientesCob,setClientesCob]=useState([]);
+  useEffect(()=>{
+    fetch(API_URL,{method:"POST",body:JSON.stringify({action:"getVisitas",representante:""})})
+      .then(r=>r.json()).then(res=>{ if(res.ok&&Array.isArray(res.data)) setVisitasCob(res.data); }).catch(()=>{});
+    fetch(API_URL,{method:"POST",body:JSON.stringify({action:"getClientes",representante:""})})
+      .then(r=>r.json()).then(res=>{ if(res.ok&&Array.isArray(res.data)) setClientesCob(res.data); }).catch(()=>{});
+  },[]);
+  // Calcular cobertura real
+  var totClientes=clientesCob.length||REPS.reduce((a,r)=>a+r.c,0)||422;
+  var clientesVisitados=new Set(visitasCob.map(v=>v.Cliente)).size;
+  // clientes reais por representante (atualiza sozinho ao mexer na carteira)
+  var cliPorRep={}; clientesCob.forEach(function(c){ var r=String(c.rep||"").trim()||"—"; cliPorRep[r]=(cliPorRep[r]||0)+1; });
+  var visSetRep={}; visitasCob.forEach(function(v){ var r=String(v.Representante||"").trim()||"—"; if(!visSetRep[r]) visSetRep[r]={}; if(v.Cliente) visSetRep[r][v.Cliente]=1; });
+  var repsCob=Object.keys(cliPorRep).sort(function(a,b){ return cliPorRep[b]-cliPorRep[a]; });
+  var totVis=clientesVisitados;
+  var totFrios=Math.max(0,totClientes-clientesVisitados);
+  var cobMedia=totClientes>0?Math.round((totVis/totClientes)*100):0;
+  var trintaDiasAtras=new Date(); trintaDiasAtras.setDate(trintaDiasAtras.getDate()-30);
+  function parseDt(s){ return parseVisitaDate(s); }
+  var fil=visitasCob.filter(v=>{
+    var dt=parseDt(v.Data); if(!dt) return false;
+    return dt<trintaDiasAtras&&(!filtRep||v.Representante===filtRep)&&(!busca||v.Cliente.toLowerCase().includes(busca.toLowerCase())||v.Cidade.toLowerCase().includes(busca.toLowerCase()));
+  }).sort((a,b)=>ord==="dias"?b.d-a.d:a.n.localeCompare(b.n));
+  var urg=fil.filter(c=>c.d>60).length,at=fil.filter(c=>c.d<=60).length;
+
+  return <div>
+    <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12,marginBottom:20}}>
+      <KPI icon="🏢" val={totClientes} lbl="Total de clientes" delta="Ativos na carteira" up ac={V} ib={VP}/>
+      <KPI icon="✅" val={totVis} lbl="Visitados no período" ac={O} ib={OP}/>
+      <KPI icon="❄️" val={totFrios} lbl="Frios (+30d)" delta="Sem visita recente" ac={M} ib={MP}/>
+      <KPI icon="📊" val={`${cobMedia}%`} lbl="Cobertura média" ac={B} ib={BP}/>
+    </div>
+    <Card title="Cobertura por representante" style={{marginBottom:20}}>
+      {repsCob.length===0&&<div style={{fontSize:12,color:INK4,padding:"6px 0"}}>Carregando carteira...</div>}
+      {repsCob.map(function(rn){
+        var totC=cliPorRep[rn]||0, visC=visSetRep[rn]?Object.keys(visSetRep[rn]).length:0, pct=totC>0?Math.round((visC/totC)*100):0, cor=pct>=40?V:pct>=20?O:"#DC2626";
+        var ini=rn.split(/\s+/).map(function(w){return w[0]||"";}).slice(0,2).join("").toUpperCase()||"—";
+        return <div key={rn} style={{display:"flex",alignItems:"center",gap:12,marginBottom:12}}>
+          <Av ini={ini}/>
+          <div style={{width:100,fontSize:12,fontWeight:700,flexShrink:0}}>{rn.split(" ")[0]}</div>
+          <div style={{flex:1}}><ProgBar pct={pct} col={cor}/></div>
+          <div style={{fontSize:10.5,fontFamily:"JetBrains Mono,monospace",fontWeight:700,color:INK3,minWidth:100}}>{visC}/{totC} ({pct}%)</div>
+          <Pill txt={pct>=40?"✅ Boa":pct>=20?"⚠️ Regular":"🔴 Baixa"} ok={pct>=40?true:pct>=20?undefined:false}/>
+        </div>;
+      })}
+    </Card>
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:14,marginBottom:20}}>
+      <Card title="🔥 Mais visitados">
+        {REPS.flatMap(r=>(COB[r.n]?.top||[]).map(c=>({c,r:r.n.split(" ")[0]}))).slice(0,7).map((x,i)=>(
+          <div key={i} style={{display:"flex",alignItems:"center",gap:9,padding:"7px 0",borderBottom:`1px solid #F0EBE4`}}>
+            <div style={{width:20,height:20,borderRadius:"50%",background:i<3?O:VP,color:i<3?"#fff":V,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9.5,fontWeight:800,flexShrink:0}}>{i+1}</div>
+            <div style={{flex:1,minWidth:0}}><div style={{fontSize:11.5,fontWeight:700,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{x.c}</div><div style={{fontSize:10,color:INK4}}>{x.r}</div></div>
+            <span style={{fontSize:9,background:i<3?OP:VP,color:i<3?M:V,padding:"1px 7px",borderRadius:20,fontWeight:700,flexShrink:0}}>{i<3?"🔥":"Recorr."}</span>
+          </div>
+        ))}
+      </Card>
+      <Card title="❄️ Frios por rep">
+        {REPS.map(r=>{
+          var frios=FRIOS30.filter(c=>c.rep===r.n),pior=frios.sort((a,b)=>b.d-a.d)[0];
+          return <div key={r.n} style={{display:"flex",alignItems:"center",gap:9,padding:"8px 0",borderBottom:`1px solid #F0EBE4`}}>
+            <Av ini={r.i}/>
+            <div style={{flex:1,minWidth:0}}><div style={{fontSize:12,fontWeight:700}}>{r.n.split(" ")[0]}</div><div style={{fontSize:10,color:INK4}}>{frios.length} frios{pior?` · ${pior.d}d`:""}</div></div>
+            <span style={{fontSize:9,background:frios.length>3?"#FEE2E2":frios.length>1?"#FEF3C7":"#DCFCE7",color:frios.length>3?"#7F1D1D":frios.length>1?"#92400E":"#166534",padding:"1px 8px",borderRadius:20,fontWeight:800,flexShrink:0}}>{frios.length}</span>
+          </div>;
+        })}
+      </Card>
+      <Card title="📊 Índice Pareto">
+        <p style={{fontSize:11,color:INK3,marginBottom:12,lineHeight:1.6}}><strong>Ideal:</strong> top 20% = máx 60% das visitas.</p>
+        {REPS.map(r=>{
+          var cob=COB[r.n]||{v:0},top20=Math.round(r.c*.2),conc=cob.v>0?Math.round((Math.min(cob.v,top20)/cob.v)*100):0,alert=conc>70;
+          return <div key={r.n} style={{display:"flex",alignItems:"center",gap:8,marginBottom:9}}>
+            <div style={{width:60,fontSize:11,fontWeight:700,flexShrink:0}}>{r.n.split(" ")[0]}</div>
+            <div style={{flex:1,fontSize:10.5,color:INK3}}>top 20% = <strong>{conc}%</strong></div>
+            <Pill txt={alert?"⚠️ Concent.":"✅ Ok"} ok={alert?false:true}/>
+          </div>;
+        })}
+      </Card>
+    </div>
+    <Card title="⚠️ Clientes não visitados há +30 dias">
+      <div style={{display:"flex",gap:10,marginBottom:16}}>
+        {[[urg,"🔴 Urgente (+60d)","#FEE2E2","#DC2626","#7F1D1D"],[at,"🟡 Atenção (30–60d)","#FEF3C7","#CA8A04","#78350F"],[fil.length,"Total no filtro",VP,V,V2]].map(([n,l,bg,bdr,c],i)=>(
+          <div key={i} style={{flex:1,background:bg,borderRadius:10,padding:"12px 14px",borderLeft:`3px solid ${bdr}`}}>
+            <div style={{fontFamily:"Nunito,sans-serif",fontSize:22,fontWeight:900,color:c}}>{n}</div>
+            <div style={{fontSize:10.5,fontWeight:700,color:c,textTransform:"uppercase",letterSpacing:".6px",marginTop:2,opacity:.85}}>{l}</div>
+          </div>
+        ))}
+        <div style={{flex:2,background:BG,borderRadius:10,padding:"10px 14px"}}>
+          <div style={{fontSize:10.5,fontWeight:700,color:INK3,marginBottom:4}}>💡 Ação recomendada</div>
+          <div style={{fontSize:11,color:INK3,lineHeight:1.5}}>Clientes +60 dias têm alto risco de churn. Priorize visitas ou contatos remotos para os <strong>urgentes</strong> esta semana.</div>
+        </div>
+      </div>
+      <div style={{display:"flex",gap:8,marginBottom:14,flexWrap:"wrap"}}>
+        <input value={busca} onChange={e=>setBusca(e.target.value)} placeholder="🔍 Buscar cliente ou cidade..." style={{padding:"7px 12px",border:`1.5px solid ${BRD}`,borderRadius:8,fontFamily:"Nunito Sans,sans-serif",fontSize:12.5,outline:"none",width:220}}/>
+        <select value={filtRep} onChange={e=>setFiltRep(e.target.value)} style={{padding:"7px 12px",border:`1.5px solid ${BRD}`,borderRadius:8,fontFamily:"Nunito Sans,sans-serif",fontSize:12.5,outline:"none"}}>
+          <option value="">Todos os representantes</option>
+          {REPS.map(r=><option key={r.n} value={r.n}>{r.n}</option>)}
+        </select>
+        <select value={ord} onChange={e=>setOrd(e.target.value)} style={{padding:"7px 12px",border:`1.5px solid ${BRD}`,borderRadius:8,fontFamily:"Nunito Sans,sans-serif",fontSize:12.5,outline:"none"}}>
+          <option value="dias">Mais dias sem visita</option>
+          <option value="nome">Nome A–Z</option>
+        </select>
+        <span style={{fontSize:11,color:INK4,display:"flex",alignItems:"center"}}>{fil.length} cliente(s)</span>
+      </div>
+      <table style={{width:"100%",borderCollapse:"collapse"}}>
+        <thead><tr>{["Cliente","Representante","Cidade","Última visita","Dias","Urgência","Ação"].map(h=><th key={h} style={{fontSize:9.5,fontWeight:800,color:INK4,textTransform:"uppercase",letterSpacing:".7px",padding:"7px 10px",textAlign:"left",borderBottom:`1.5px solid ${BRD}`}}>{h}</th>)}</tr></thead>
+        <tbody>{fil.map((c,i)=>{
+          var urg2=c.d>60,ini=REPS.find(r=>r.n===c.rep)?.i||"??";
+          return <tr key={i} style={{borderBottom:`1px solid ${BRD}`,background:i%2===0?"#fff":"#FAFAF8"}}>
+            <td style={{padding:"10px",fontSize:12.5,fontWeight:700}}>{c.n}</td>
+            <td style={{padding:"10px"}}><div style={{display:"flex",alignItems:"center",gap:7}}><Av ini={ini}/><span style={{fontSize:12,fontWeight:600}}>{c.rep.split(" ")[0]}</span></div></td>
+            <td style={{padding:"10px",fontSize:12,color:INK3}}>📍 {c.c}</td>
+            <td style={{padding:"10px",fontFamily:"JetBrains Mono,monospace",fontSize:11.5,color:INK4}}>{c.u}</td>
+            <td style={{padding:"10px"}}>
+              <div style={{display:"flex",alignItems:"center",gap:8}}>
+                <div style={{width:60,height:6,background:"#F0EBE4",borderRadius:3,overflow:"hidden"}}><div style={{height:"100%",width:`${Math.min((c.d/90)*100,100)}%`,background:urg2?"#DC2626":O,borderRadius:3}}/></div>
+                <span style={{fontFamily:"JetBrains Mono,monospace",fontSize:12,fontWeight:800,color:urg2?"#DC2626":O}}>{c.d}d</span>
+              </div>
+            </td>
+            <td style={{padding:"10px"}}><Pill txt={urg2?"🔴 Urgente":"🟡 Atenção"} ok={false}/></td>
+            <td style={{padding:"10px"}}><button style={{padding:"4px 11px",background:V,color:"#fff",border:"none",borderRadius:20,fontSize:10,fontWeight:800,cursor:"pointer"}}>📅 Agendar</button></td>
+          </tr>;
+        })}</tbody>
+      </table>
+    </Card>
+  </div>;
+}
+
+function PageEficiencia(){
+  var [visitas,setVisitas]=useState([]);
+  var [loading,setLoading]=useState(true);
+  var [repFiltro,setRepFiltro]=useState("Todos");
+  var [soAlerta,setSoAlerta]=useState(false);
+  useEffect(()=>{
+    fetch(API_URL,{method:"POST",body:JSON.stringify({action:"getVisitas",representante:""})})
+      .then(r=>r.json()).then(res=>{ if(res.ok&&Array.isArray(res.data)) setVisitas(res.data); setLoading(false); }).catch(()=>setLoading(false));
+  },[]);
+  var ALERTA=4;
+  var mapa={};
+  visitas.forEach(function(v){
+    var cli=String(v.Cliente||"").trim(); if(!cli) return;
+    if(!mapa[cli]) mapa[cli]={cliente:cli,reps:{},total:0,prospec:0,temProposta:false,temVenda:false,ultima:null,ultimaTxt:""};
+    var g=mapa[cli]; g.total++;
+    var rep=v.Representante||"—"; g.reps[rep]=(g.reps[rep]||0)+1;
+    var tp=v.Tipo_Visita||"";
+    if(/prospec/i.test(tp)) g.prospec++;
+    var st=v.Status_Negocio||"";
+    if(st==="Proposta apresentada"||st==="Em negociação"||tp==="Negociação/Proposta Enviada") g.temProposta=true;
+    if(st==="Venda realizada"||tp==="Fechamento de Venda") g.temVenda=true;
+    var d=parseVisitaDate(v.Data);
+    if(d&&(!g.ultima||d>g.ultima)){ g.ultima=d; g.ultimaTxt=v.Data; }
+  });
+  var clientes=Object.keys(mapa).map(function(k){
+    var g=mapa[k]; var repTop="—",mx=-1;
+    Object.keys(g.reps).forEach(function(r){ if(g.reps[r]>mx){mx=g.reps[r];repTop=r;} });
+    var sit;
+    if(g.temVenda) sit={k:"conv",l:"Convertido",cor:["#DCFCE7","#166534"],ic:"🟢",rank:3};
+    else if(g.temProposta) sit={k:"and",l:"Em andamento",cor:["#FEF3C7","#78350F"],ic:"🟡",rank:2};
+    else if(g.total>=ALERTA) sit={k:"alerta",l:"Sem avanço",cor:["#FEE2E2","#7F1D1D"],ic:"🔴",rank:0};
+    else sit={k:"ini",l:"Inicial",cor:["#EEF2F7","#475569"],ic:"⚪",rank:1};
+    return {cliente:g.cliente,rep:repTop,total:g.total,prospec:g.prospec,temProposta:g.temProposta,temVenda:g.temVenda,ultima:g.ultimaTxt,sit:sit};
+  });
+  var repsDisp=[]; clientes.forEach(function(c){ if(c.rep&&repsDisp.indexOf(c.rep)<0) repsDisp.push(c.rep); }); repsDisp.sort();
+  var baseKpi=clientes.filter(function(c){ return repFiltro==="Todos"||c.rep===repFiltro; });
+  var nAlerta=baseKpi.filter(function(c){return c.sit.k==="alerta";}).length;
+  var nAnd=baseKpi.filter(function(c){return c.sit.k==="and";}).length;
+  var nConv=baseKpi.filter(function(c){return c.sit.k==="conv";}).length;
+  var alertaPorRep={}; clientes.filter(function(c){return c.sit.k==="alerta";}).forEach(function(c){ alertaPorRep[c.rep]=(alertaPorRep[c.rep]||0)+1; });
+  var alertaRepList=Object.keys(alertaPorRep).map(function(k){return [k,alertaPorRep[k]];}).sort(function(a,b){return b[1]-a[1];});
+  var alertaMax=alertaRepList.length?alertaRepList[0][1]:1;
+  var filtrados=clientes.filter(function(c){
+    if(repFiltro!=="Todos"&&c.rep!==repFiltro) return false;
+    if(soAlerta&&c.sit.k!=="alerta") return false;
+    return true;
+  }).sort(function(a,b){ if(a.sit.rank!==b.sit.rank) return a.sit.rank-b.sit.rank; return b.total-a.total; });
+  if(loading) return <div style={{display:"flex",alignItems:"center",justifyContent:"center",height:"60vh",gap:12,color:INK3,fontSize:13}}><div style={{width:32,height:32,border:`3px solid ${VP}`,borderTop:`3px solid ${V}`,borderRadius:"50%",animation:"spin 1s linear infinite"}}/> Carregando acompanhamento...</div>;
+  var SimNao=function(props){ return <span style={{display:"inline-block",fontSize:10,fontWeight:800,padding:"2px 9px",borderRadius:20,background:props.v?"#DCFCE7":"#F3F4F6",color:props.v?"#166534":"#9CA3AF"}}>{props.v?"Sim":"Não"}</span>; };
+  return <div>
+    <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12,marginBottom:14}}>
+      <KPI icon="🏢" val={baseKpi.length} lbl="Clientes visitados" ac={V} ib={VP}/>
+      <KPI icon="🔴" val={nAlerta} lbl="Sem avanço (alerta)" delta={nAlerta>0?"Requer atenção":"Tudo certo"} ac="#DC2626" ib="#FEE2E2"/>
+      <KPI icon="🟡" val={nAnd} lbl="Em andamento" delta="Com proposta, sem fechar" ac={O} ib={OP}/>
+      <KPI icon="🟢" val={nConv} lbl="Convertidos" delta="Tiveram venda" up ac={V} ib={VP}/>
+    </div>
+    <div style={{background:"#FFF7ED",border:`1px solid ${O}`,borderRadius:10,padding:"10px 14px",fontSize:12,color:INK2,marginBottom:16,lineHeight:1.5}}>
+      🔴 <b>Sem avanço</b> = cliente com <b>{ALERTA} ou mais visitas</b> e <b>nenhuma proposta nem venda</b> em todo o histórico — possível tempo investido sem retorno comercial.
+    </div>
+    {alertaRepList.length>0&&<Card title="Clientes sem avanço por representante">
+      <div style={{display:"flex",flexDirection:"column",gap:9,marginTop:6}}>
+        {alertaRepList.map(function(e){ return <div key={e[0]} style={{display:"flex",alignItems:"center",gap:10}}>
+          <div style={{width:130,fontSize:12,fontWeight:700,flexShrink:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{e[0].split(" ")[0]}</div>
+          <div style={{flex:1,height:20,background:"#F0EBE4",borderRadius:4,overflow:"hidden"}}><div style={{height:"100%",width:`${Math.round((e[1]/alertaMax)*100)}%`,background:"#DC2626",borderRadius:4,display:"flex",alignItems:"center",paddingLeft:8}}><span style={{fontSize:10,fontWeight:800,color:"#fff"}}>{e[1]}</span></div></div>
+        </div>; })}
+      </div>
+    </Card>}
+    <div style={{display:"flex",alignItems:"center",gap:10,margin:"16px 0 12px",flexWrap:"wrap"}}>
+      <span style={{fontSize:12,fontWeight:800,color:INK3,textTransform:"uppercase",letterSpacing:".5px"}}>👤 Representante</span>
+      <select value={repFiltro} onChange={function(e){setRepFiltro(e.target.value);}} style={{padding:"9px 14px",borderRadius:10,border:`1px solid ${BRD}`,background:"#fff",fontFamily:"Nunito,sans-serif",fontSize:13,fontWeight:700,color:INK,cursor:"pointer",minWidth:180}}>
+        <option value="Todos">Todos os representantes</option>
+        {repsDisp.map(function(r){return <option key={r} value={r}>{r}</option>;})}
+      </select>
+      <button onClick={function(){setSoAlerta(!soAlerta);}} style={{padding:"9px 14px",borderRadius:10,border:`1.5px solid ${soAlerta?"#DC2626":BRD}`,background:soAlerta?"#FEE2E2":"#fff",color:soAlerta?"#7F1D1D":INK3,fontFamily:"Nunito,sans-serif",fontSize:12.5,fontWeight:800,cursor:"pointer"}}>🔴 {soAlerta?"Mostrando só alertas":"Mostrar só os em alerta"}</button>
+    </div>
+    <Card title={`Acompanhamento por cliente · ${filtrados.length}`}>
+      {filtrados.length===0&&<div style={{textAlign:"center",padding:"28px",color:INK4,fontSize:13}}>Nenhum cliente para os filtros selecionados.</div>}
+      {filtrados.length>0&&<div style={{overflowX:"auto"}}><table style={{width:"100%",borderCollapse:"collapse"}}>
+        <thead><tr>{["Cliente","Representante","Total de Visitas","Prospecções","Teve Proposta","Teve Fechamento","Última Visita","Situação"].map(function(hh){return <th key={hh} style={{fontSize:9.5,fontWeight:800,color:INK4,textTransform:"uppercase",letterSpacing:".4px",padding:"7px 8px",textAlign:"left",borderBottom:`1.5px solid ${BRD}`,whiteSpace:"nowrap"}}>{hh}</th>;})}</tr></thead>
+        <tbody>{filtrados.map(function(c){ return <tr key={c.cliente} style={{borderBottom:`1px solid ${BRD}`,background:c.sit.k==="alerta"?"#FEF2F2":"transparent"}}>
+          <td style={{padding:"9px 8px",fontSize:12,fontWeight:700,color:INK}}>{c.cliente}</td>
+          <td style={{padding:"9px 8px",fontSize:12,color:INK2}}>{c.rep.split(" ")[0]}</td>
+          <td style={{padding:"9px 8px",fontFamily:"JetBrains Mono,monospace",fontSize:12.5,fontWeight:800}}>{c.total}</td>
+          <td style={{padding:"9px 8px",fontFamily:"JetBrains Mono,monospace",fontSize:12}}>{c.prospec}</td>
+          <td style={{padding:"9px 8px"}}><SimNao v={c.temProposta}/></td>
+          <td style={{padding:"9px 8px"}}><SimNao v={c.temVenda}/></td>
+          <td style={{padding:"9px 8px",fontSize:11,color:INK3}}>{c.ultima||"—"}</td>
+          <td style={{padding:"9px 8px"}}><span style={{display:"inline-flex",alignItems:"center",gap:5,fontSize:10,fontWeight:800,padding:"3px 10px",borderRadius:20,background:c.sit.cor[0],color:c.sit.cor[1],whiteSpace:"nowrap"}}>{c.sit.ic} {c.sit.l}</span></td>
+        </tr>; })}</tbody>
+      </table></div>}
+    </Card>
+  </div>;
+}
+
+function PageComercial(){
+  var [visitasCom,setVisitasCom]=useState([]);
+  useEffect(()=>{
+    fetch(API_URL,{method:"POST",body:JSON.stringify({action:"getVisitas",representante:""})})
+      .then(r=>r.json()).then(res=>{ if(res.ok&&Array.isArray(res.data)) setVisitasCom(res.data); }).catch(()=>{});
+  },[]);
+  // Calcular KPIs reais
+  var hoje=new Date();
+  var semStart=new Date(hoje); semStart.setDate(hoje.getDate()-6);
+  var mesStart=new Date(hoje); mesStart.setDate(1);
+  var semAntStart=new Date(hoje); semAntStart.setDate(hoje.getDate()-13);
+  var semAntEnd=new Date(hoje); semAntEnd.setDate(hoje.getDate()-7);
+  var mesAntStart=new Date(hoje.getFullYear(),hoje.getMonth()-1,1);
+  var mesAntEnd=new Date(hoje.getFullYear(),hoje.getMonth(),0);
+  function parseDt(s){ return parseVisitaDate(s); }
+  function inRange(v,s,e){ var d=parseDt(v.Data); return d&&d>=s&&d<=e; }
+  var visSem=visitasCom.filter(v=>inRange(v,semStart,hoje));
+  var visMes=visitasCom.filter(v=>inRange(v,mesStart,hoje));
+  var visSemanterior=visitasCom.filter(v=>inRange(v,semAntStart,semAntEnd));
+  var visMesAnterior=visitasCom.filter(v=>inRange(v,mesAntStart,mesAntEnd));
+  var ehV=function(v){return v.Status_Negocio==="Venda realizada"||v.Tipo_Visita==="Fechamento de Venda";};
+  var ehP=function(v){return v.Status_Negocio==="Proposta apresentada"||v.Status_Negocio==="Em negociação"||v.Tipo_Visita==="Negociação/Proposta Enviada";};
+  var sem={f:visSem.filter(ehV).length,v:visSem.reduce((a,v)=>a+(parseFloat(v["Valor_R$"])||0),0),p:visSem.filter(ehP).length};
+  var sA={f:visSemanterior.filter(ehV).length,v:visSemanterior.reduce((a,v)=>a+(parseFloat(v["Valor_R$"])||0),0),p:visSemanterior.filter(ehP).length};
+  var mes={f:visMes.filter(ehV).length,v:visMes.reduce((a,v)=>a+(parseFloat(v["Valor_R$"])||0),0),p:visMes.filter(ehP).length};
+  var mA={f:visMesAnterior.filter(ehV).length,v:visMesAnterior.reduce((a,v)=>a+(parseFloat(v["Valor_R$"])||0),0),p:visMesAnterior.filter(ehP).length};
+  var conv=mes.p>0?Math.round((mes.f/mes.p)*100):0;
+  var prosMes=visMes.filter(v=>/prospec/i.test(v.Tipo_Visita||"")).length;
+  var avalMes=visMes.filter(v=>/avalia|teste/i.test(v.Tipo_Visita||"")).length;
+  var negMes=visMes.filter(v=>v.Status_Negocio==="Em negociação").length;
+  var funnel=[{l:"Prospecções",n:prosMes,c:V},{l:"Avaliações",n:avalMes,c:V2},{l:"Propostas",n:mes.p,c:O},{l:"Negociações",n:negMes,c:M},{l:"Fechamentos",n:mes.f,c:"#16A34A"}];
+  var funMax=Math.max(1,...funnel.map(e=>e.n));
+  var prodCount={}, prodDisp={};
+  visMes.forEach(v=>String(v.Produtos||"").split(/[,;]+/).map(p=>p.trim()).filter(Boolean).forEach(p=>{
+    var noHash=p.replace(/^#/,''); var key=noHash.replace(/\s+/g,'').toLowerCase();
+    prodCount[key]=(prodCount[key]||0)+1; if(!prodDisp[key]) prodDisp[key]='#'+noHash.replace(/\s+/g,'');
+  }));
+  var prodList=Object.keys(prodCount).map(k=>[prodDisp[k],prodCount[k]]).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  var prodMax=prodList.length?prodList[0][1]:1;
+  var concorr=visMes.filter(v=>/concorr/i.test(String(v.Produtos||"")+" "+String(v.Tags||""))).length;
+  var pipeRep=REPS.map(function(r){
+    var vr=visMes.filter(v=>v.Representante===r.n);
+    var pros=vr.filter(v=>/prospec/i.test(v.Tipo_Visita||"")).length;
+    var neg=vr.filter(v=>v.Status_Negocio==="Em negociação").length;
+    var fec=vr.filter(ehV).length;
+    var val=vr.filter(ehV).reduce((a,v)=>a+(parseFloat(v["Valor_R$"])||0),0);
+    return {r:r,pros:pros,neg:neg,fec:fec,val:val};
+  });
+  function DB({cur,ant,fmt}){
+    var d=cur-ant;
+    return <div style={{flex:1,background:BG,borderRadius:8,padding:"9px 10px",textAlign:"center"}}>
+      <div style={{fontFamily:"Nunito,sans-serif",fontSize:17,fontWeight:800,color:d>=0?"#16A34A":"#DC2626"}}>{d>=0?"+":""}{fmt?fmt(Math.abs(d)):d}</div>
+      <div style={{fontSize:8.5,color:INK4,fontWeight:700,textTransform:"uppercase",letterSpacing:".3px",marginTop:2,lineHeight:1.2}}>{ant===sA.f||ant===sA.v||ant===sA.p?"vs. Semana Anterior":"vs. Mês Anterior"}</div>
+    </div>;
+  }
+  return <div>
+    <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12,marginBottom:20}}>
+      {[[`R$ ${(mes.v/1000).toFixed(0)}k`,"Valor negociado · mês","💰",V,VP,mes.v,sA.v,mA.v,v=>`R$ ${(v/1000).toFixed(0)}k`],
+        [mes.f,"Fechamentos · mês","✅",O,OP,mes.f,sA.f,mA.f,null],
+        [mes.p,"Propostas enviadas","📄",M,MP,mes.p,sA.p,mA.p,null],
+        [`${conv}%`,"Taxa de conversão","🎯",B,BP,null,null,null,null]
+      ].map(([val,lbl,icon,ac,ib,cur,ant1,ant2,fmt],i)=>(
+        <div key={i} style={{...sh,position:"relative",overflow:"hidden"}}>
+          <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:ac}}/>
+          <div style={{width:38,height:38,borderRadius:10,background:ib,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,marginBottom:10}}>{icon}</div>
+          <div style={{fontFamily:"Nunito,sans-serif",fontSize:26,fontWeight:900,lineHeight:1}}>{val}</div>
+          <div style={{fontSize:10.5,fontWeight:700,color:INK4,textTransform:"uppercase",letterSpacing:".8px",marginTop:3}}>{lbl}</div>
+          {cur!==null&&<div style={{display:"flex",gap:8,marginTop:10}}>
+            <DB cur={cur} ant={ant1} fmt={fmt}/>
+            <DB cur={cur} ant={ant2} fmt={fmt}/>
+          </div>}
+          {cur===null&&<div style={{fontSize:10.5,fontWeight:700,marginTop:7,color:"#16A34A"}}>Proposta → Fechamento</div>}
+        </div>
+      ))}
+    </div>
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:20}}>
+      <Card title="Funil de vendas · mês">
+        <div style={{display:"flex",flexDirection:"column",gap:10,marginTop:8}}>
+          {funnel.map(e=>(
+            <div key={e.l} style={{display:"flex",alignItems:"center",gap:10}}>
+              <div style={{width:120,fontSize:11.5,fontWeight:700,flexShrink:0}}>{e.l}</div>
+              <div style={{flex:1,height:24,background:"#F0EBE4",borderRadius:4,overflow:"hidden"}}>
+                <div style={{height:"100%",width:`${Math.round((e.n/funMax)*100)}%`,background:e.c,borderRadius:4,display:"flex",alignItems:"center",paddingLeft:9}}>
+                  <span style={{fontSize:10,fontWeight:800,color:"#fff"}}>{e.n}</span>
+                </div>
+              </div>
+              <div style={{fontSize:10.5,color:INK4,fontFamily:"JetBrains Mono,monospace",fontWeight:700,minWidth:32}}>{Math.round((e.n/funMax)*100)}%</div>
+            </div>
+          ))}
+        </div>
+      </Card>
+      <Card title="Produtos · frequência">
+        {prodList.length===0&&<div style={{fontSize:11.5,color:INK4,padding:"6px 0"}}>Sem registros de produtos no período.</div>}
+        {prodList.map(([n,v],idx)=>{
+          var c=[V,V2,O,M,B,"#16A34A"][idx%6];
+          return <div key={n} style={{display:"flex",alignItems:"center",gap:10,marginBottom:12}}>
+            <div style={{fontSize:12,fontWeight:700,width:160,flexShrink:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{n}</div>
+            <div style={{flex:1,height:8,background:"#F0EBE4",borderRadius:4,overflow:"hidden"}}><div style={{height:"100%",width:`${Math.round((v/prodMax)*100)}%`,background:c,borderRadius:4}}/></div>
+            <div style={{fontSize:11,fontFamily:"JetBrains Mono,monospace",fontWeight:800,color:INK3}}>{v}</div>
+          </div>;
+        })}
+        {concorr>0&&<details style={{marginTop:14}}>
+          <summary style={{padding:12,background:OP,borderRadius:8,borderLeft:`3px solid ${O}`,cursor:"pointer",listStyle:"none"}}>
+            <div style={{fontSize:11,fontWeight:700,color:M,marginBottom:4}}>⚠️ Alerta concorrência <span style={{fontWeight:600,color:INK4}}>(clique para ver quais)</span></div>
+            <div style={{fontSize:11,color:INK3,lineHeight:1.5}}>{concorr} visita(s) com produto concorrente. Analisar reconversão.</div>
+          </summary>
+          <div style={{padding:"8px 12px 2px"}}>
+            {visMes.filter(v=>/concorr/i.test(String(v.Produtos||"")+" "+String(v.Tags||""))).map((v,i)=>(
+              <div key={i} style={{fontSize:11.5,color:INK2,padding:"6px 0",borderBottom:`1px solid #F0EBE4`}}>
+                <b>{v.Cliente||"—"}</b> · {v.Representante||"—"}{v.Cidade?(" · "+v.Cidade):""}{v.Data?(" · "+(parseVisitaDate(v.Data)?parseVisitaDate(v.Data).toLocaleDateString("pt-BR"):"")):""}
+              </div>
+            ))}
+          </div>
+        </details>}
+      </Card>
+    </div>
+    <Card title="Pipeline por representante">
+      <table style={{width:"100%",borderCollapse:"collapse"}}>
+        <thead><tr>{["Representante","Prospecções","Negociações","Fechamentos","Valor Negociado","Conversão"].map(h=><th key={h} style={{fontSize:9.5,fontWeight:800,color:INK4,textTransform:"uppercase",letterSpacing:".4px",padding:"6px 8px",textAlign:"left",borderBottom:`1.5px solid ${BRD}`}}>{h}</th>)}</tr></thead>
+        <tbody>{pipeRep.map(({r,pros,neg,fec,val})=>{
+          return <tr key={r.n} style={{borderBottom:`1px solid ${BRD}`}}>
+            <td style={{padding:"9px 8px"}}><div style={{display:"flex",alignItems:"center",gap:7}}><Av ini={r.i}/><span style={{fontSize:12,fontWeight:700}}>{r.n.split(" ")[0]}</span></div></td>
+            <td style={{padding:"9px 8px",fontFamily:"JetBrains Mono,monospace",fontSize:12}}>{pros}</td>
+            <td style={{padding:"9px 8px",fontFamily:"JetBrains Mono,monospace",fontSize:12}}>{neg}</td>
+            <td style={{padding:"9px 8px",fontFamily:"JetBrains Mono,monospace",fontSize:12,color:V,fontWeight:700}}>{fec}</td>
+            <td style={{padding:"9px 8px",fontFamily:"JetBrains Mono,monospace",fontSize:11}}>R$ {(val/1000).toFixed(0)}k</td>
+            <td style={{padding:"9px 8px"}}><Pill txt={fec>0?`${pros>0?Math.round((fec/pros)*100):100}%`:"0%"} ok={fec>0}/></td>
+          </tr>;
+        })}</tbody>
+      </table>
+    </Card>
+  </div>;
+}
+
+function PagePreCadastros(){
+  var [lista,setLista]=useState([]);
+  var [filtro,setFiltro]=useState("todos");
+  var [busca,setBusca]=useState("");
+  var [chatPc,setChatPc]=useState(null);
+  var [msgsPc,setMsgsPc]=useState({});
+  var [editId,setEditId]=useState(null);
+  var [editForm,setEditForm]=useState({});
+  useEffect(()=>{
+    function carregar(){ fetch(API_URL,{method:"POST",body:JSON.stringify({action:"getPreCadastros"})})
+      .then(r=>r.json()).then(res=>{ if(res.ok&&Array.isArray(res.data)) setLista(res.data); }).catch(()=>{}); }
+    carregar();
+    var _t=setInterval(carregar,30000);
+    return ()=>clearInterval(_t);
+  },[]);;
+  var [novaMsgPc,setNovaMsgPc]=useState("");
+  var [aprovPc,setAprovPc]=useState(null);
+  var [credAp,setCredAp]=useState("");
+  var [prazoAp,setPrazoAp]=useState("");
+  var chatPcEndRef=useRef(null);
+  useEffect(()=>{if(chatPcEndRef.current)chatPcEndRef.current.scrollIntoView({behavior:"smooth"});},[chatPc,msgsPc]);
+
+  var pendentes=lista.filter(p=>p.status==="Pendente").length;
+  var fil=lista.filter(p=>
+    (filtro==="todos"||p.status===filtro)&&
+    (!busca||String(p.nome||"").toLowerCase().includes(busca.toLowerCase())||String(p.representante||"").toLowerCase().includes(busca.toLowerCase())||String(p.cidade||"").toLowerCase().includes(busca.toLowerCase()))
+  );
+
+  function atualizarStatus(id,novoStatus,credAprov,prazoAprov){
+    // Cadastrar: só vira "Cadastrado" se o cliente realmente entrar na carteira
+    if(novoStatus==="Cadastrado"){
+      var pc=lista.find(p=>p.id===id);
+      if(!pc) return;
+      fetch("https://script.google.com/macros/s/AKfycbzTPbl8CvTireGpFcVpeEkN3Jy6ttCzmrZRM1v5Qnq2pR2mWxEN_-CfV3bMvhrXww2q/exec",{
+        method:"POST",
+        body:JSON.stringify({
+          action:"confirmarCadastro",
+          id:pc.id,
+          nome:pc.nome,
+          logradouro:pc.logradouro||"",
+          numero:pc.numero||"",
+          bairro:pc.bairro||"",
+          cidade:pc.cidade,
+          estado:pc.estado||"SP",
+          telefone:pc.telefone||"",
+          email:pc.email_cliente||"",
+          documento:pc.documento||"",
+          representante:pc.representante,
+          credito_aprovado:credAprov||"",
+          prazo_aprovado:prazoAprov||"",
+        })
+      })
+      .then(r=>r.json())
+      .then(res=>{
+        if(res.ok){
+          setLista(l=>l.map(p=>p.id===id?{...p,status:"Cadastrado",credito_aprovado:credAprov||"",prazo_aprovado:prazoAprov||""}:p));
+          alert(res.jaExistia ? ("✅ '"+pc.nome+"' já estava na carteira de "+pc.representante+". Devolutiva registrada.") : ("✅ Cliente '"+pc.nome+"' adicionado à carteira de "+pc.representante+"!"));
+        } else {
+          alert("⚠️ O cadastro NÃO foi concluído: "+(res.error||"tente novamente")+". O status não foi alterado.");
+        }
+      })
+      .catch(()=>alert("⚠️ Sem conexão com o servidor. O cadastro não foi concluído; tente novamente."));
+      return;
+    }
+    // Demais status (Em análise, Recusado)
+    setLista(l=>l.map(p=>p.id===id?{...p,status:novoStatus}:p));
+    fetch("https://script.google.com/macros/s/AKfycbzTPbl8CvTireGpFcVpeEkN3Jy6ttCzmrZRM1v5Qnq2pR2mWxEN_-CfV3bMvhrXww2q/exec",{
+      method:"POST",
+      body:JSON.stringify({action:"atualizarPreCadastro",id:id,status:novoStatus})
+    }).catch(()=>{});
+  }
+
+  function carregarMsgsPc(pid){
+    fetch(API_URL,{method:"POST",body:JSON.stringify({action:"getMsgsPreCadastro",precadastro_id:pid})})
+      .then(r=>r.json()).then(res=>{ if(res.ok&&Array.isArray(res.data)) setMsgsPc(m=>({...m,[pid]:res.data})); }).catch(()=>{});
+  }
+  function abrirChatPc(pid){
+    var novo=chatPc===pid?null:pid;
+    setChatPc(novo);
+    if(novo) carregarMsgsPc(novo);
+  }
+  function enviarMsgPc(){
+    if(!novaMsgPc.trim()||!chatPc) return;
+    var texto=novaMsgPc.trim();
+    var nova={id:"m"+Date.now(),autor:nomeGestor(),tipo:"gestor",msg:texto,hora:new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})+"h",data:"Agora"};
+    setMsgsPc(m=>({...m,[chatPc]:[...(m[chatPc]||[]),nova]}));
+    setNovaMsgPc("");
+    var pc=lista.find(p=>p.id===chatPc);
+    fetch(API_URL,{method:"POST",body:JSON.stringify({action:"enviarMsgPreCadastro",precadastro_id:chatPc,representante:pc?pc.representante:"",mensagem:{autor:nomeGestor(),tipo:"gestor",msg:texto}})}).catch(()=>{});
+  }
+
+  function abrirEdicao(p){
+    setEditId(p.id);
+    setEditForm({Nome:p.nome||"",Logradouro:p.logradouro||"",Numero:p.numero||"",Bairro:p.bairro||"",Cidade:p.cidade||"",Estado:p.estado||"",Telefone:p.telefone||"",Email_Cliente:p.email_cliente||"",Documento:p.documento||"",IE:p.ie||"",Regime_Tributario:p.regime_tributario||"",Contribuinte_ICMS:p.contribuinte_icms||"",Culturas:p.culturas||"",Area_ha:p.area_ha||"",Credito_Solicitado:p.credito_solicitado||"",Volume_Previsto:p.volume_previsto||"",Observacoes:p.observacoes||""});
+  }
+  function setCampo(k,v){ setEditForm(f=>({...f,[k]:v})); }
+  function salvarEdicao(id){
+    fetch(API_URL,{method:"POST",body:JSON.stringify({action:"editarPreCadastro",id:id,campos:editForm})})
+      .then(r=>r.json()).then(res=>{
+        if(res.ok){
+          setLista(l=>l.map(p=>p.id===id?{...p,nome:editForm.Nome,logradouro:editForm.Logradouro,numero:editForm.Numero,bairro:editForm.Bairro,cidade:editForm.Cidade,estado:editForm.Estado,telefone:editForm.Telefone,email_cliente:editForm.Email_Cliente,documento:editForm.Documento,ie:editForm.IE,culturas:editForm.Culturas,area_ha:editForm.Area_ha,credito_solicitado:editForm.Credito_Solicitado,volume_previsto:editForm.Volume_Previsto,observacoes:editForm.Observacoes}:p));
+          setEditId(null);
+        } else alert("⚠️ "+(res.error||"Erro ao salvar"));
+      }).catch(()=>alert("⚠️ Sem conexão com o servidor."));
+  }
+  function devolver(id){
+    var motivo=window.prompt("Descreva o que o representante precisa corrigir/completar:");
+    if(motivo===null) return;
+    fetch(API_URL,{method:"POST",body:JSON.stringify({action:"devolverPreCadastro",id:id,motivo:motivo})})
+      .then(r=>r.json()).then(res=>{
+        if(res.ok) setLista(l=>l.map(p=>p.id===id?{...p,status:"Devolvido",motivo_devolucao:motivo}:p));
+        else alert("⚠️ "+(res.error||"Erro"));
+      }).catch(()=>alert("⚠️ Sem conexão com o servidor."));
+  }
+  var statusCor={
+    "Pendente":{bg:"#FEE2E2",c:"#7F1D1D",dot:"#DC2626"},
+    "Em análise":{bg:"#FEF3C7",c:"#78350F",dot:"#CA8A04"},
+    "Cadastrado":{bg:"#DCFCE7",c:"#166534",dot:"#16A34A"},
+    "Recusado":{bg:"#F3F4F6",c:"#4B5563",dot:"#9CA3AF"},
+    "Devolvido":{bg:"#FFEDD5",c:"#9A3412",dot:"#EA580C"},
+  };
+
+  return <div>
+    {aprovPc&&<div onClick={e=>{if(e.target===e.currentTarget)setAprovPc(null);}} style={{position:"fixed",inset:0,background:"rgba(0,0,0,.45)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center"}}>
+      <div style={{background:"#fff",borderRadius:14,padding:"22px 24px",width:380,maxWidth:"90vw",boxShadow:"0 12px 40px rgba(0,0,0,.25)"}}>
+        <div style={{fontSize:16,fontWeight:900,color:V,fontFamily:"Nunito,sans-serif"}}>Aprovar cadastro</div>
+        <div style={{fontSize:12.5,color:INK3,marginTop:3,marginBottom:14}}>{aprovPc.nome} — informe o crédito e/ou o prazo aprovado (opcional). O vendedor verá no app.</div>
+        <label style={{fontSize:11,fontWeight:800,color:INK4}}>Crédito aprovado (R$)</label>
+        <input value={credAp} onChange={e=>setCredAp(e.target.value)} placeholder="ex.: 50.000,00" style={{width:"100%",padding:"9px 11px",border:`1.5px solid ${BRD}`,borderRadius:8,fontSize:13,fontFamily:"Nunito Sans,sans-serif",outline:"none",boxSizing:"border-box",marginTop:3,marginBottom:12}}/>
+        <label style={{fontSize:11,fontWeight:800,color:INK4}}>Prazo aprovado</label>
+        <input value={prazoAp} onChange={e=>setPrazoAp(e.target.value)} placeholder="ex.: 30/60/90 dias" style={{width:"100%",padding:"9px 11px",border:`1.5px solid ${BRD}`,borderRadius:8,fontSize:13,fontFamily:"Nunito Sans,sans-serif",outline:"none",boxSizing:"border-box",marginTop:3,marginBottom:18}}/>
+        <div style={{display:"flex",gap:10,justifyContent:"flex-end"}}>
+          <button onClick={()=>setAprovPc(null)} style={{padding:"9px 16px",background:"#F3F4F6",color:"#4B5563",border:`1px solid ${BRD}`,borderRadius:20,fontWeight:800,fontSize:12,fontFamily:"Nunito,sans-serif",cursor:"pointer"}}>Cancelar</button>
+          <button onClick={()=>{atualizarStatus(aprovPc.id,"Cadastrado",credAp,prazoAp);setAprovPc(null);}} style={{padding:"9px 18px",background:V,color:"#fff",border:"none",borderRadius:20,fontWeight:800,fontSize:12,fontFamily:"Nunito,sans-serif",cursor:"pointer"}}>✅ Confirmar cadastro</button>
+        </div>
+      </div>
+    </div>}
+    <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12,marginBottom:20}}>
+      <KPI icon="🆕" val={pendentes} lbl="Pendentes" delta="Aguardando cadastro" ac="#DC2626" ib="#FEE2E2"/>
+      <KPI icon="🔍" val={lista.filter(p=>p.status==="Em análise").length} lbl="Em análise" delta="Backoffice analisando" ac={O} ib={OP}/>
+      <KPI icon="✅" val={lista.filter(p=>p.status==="Cadastrado").length} lbl="Cadastrados" delta="Concluídos" up ac={V} ib={VP}/>
+      <KPI icon="👥" val={lista.length} lbl="Total recebidos" delta="Pré-cadastros" ac={B} ib={BP}/>
+    </div>
+
+    <div style={{...sh,marginBottom:20,padding:"16px 20px",background:"#FEF3C7",border:`1.5px solid #CA8A04`,borderLeft:`4px solid #CA8A04`}}>
+      <div style={{display:"flex",alignItems:"center",gap:10}}>
+        <span style={{fontSize:20}}>📧</span>
+        <div>
+          <div style={{fontSize:13,fontWeight:800,color:"#78350F",fontFamily:"Nunito,sans-serif"}}>Notificações automáticas ativas</div>
+          <div style={{fontSize:11.5,color:"#92400E",marginTop:3,lineHeight:1.5}}>
+            Quando um representante cria um pré-cadastro, os e-mails abaixo são notificados automaticamente:<br/>
+            <strong>lucas.rugine@teranv.com.br · viviane.soldera@teraambiental.com.br · caroline.nascimento@teranv.com.br · pedro.amorim@teranv.com.br</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <Card title={`Pré-cadastros recebidos · ${fil.length} resultado(s)`}
+      action={<div style={{display:"flex",gap:8,alignItems:"center"}}>
+        <input value={busca} onChange={e=>setBusca(e.target.value)} placeholder="🔍 Buscar..." style={{padding:"6px 11px",border:`1.5px solid ${BRD}`,borderRadius:8,fontFamily:"Nunito Sans,sans-serif",fontSize:12,outline:"none",width:180}}/>
+        <select value={filtro} onChange={e=>setFiltro(e.target.value)} style={{padding:"6px 11px",border:`1.5px solid ${BRD}`,borderRadius:8,fontFamily:"Nunito Sans,sans-serif",fontSize:12,outline:"none"}}>
+          <option value="todos">Todos os status</option>
+          <option value="Pendente">Pendente</option>
+          <option value="Em análise">Em análise</option>
+          <option value="Cadastrado">Cadastrado</option>
+          <option value="Devolvido">Devolvido</option>
+          <option value="Recusado">Recusado</option>
+        </select>
+      </div>}
+    >
+      {fil.length===0&&<div style={{textAlign:"center",padding:"32px",color:INK4,fontSize:13}}>
+        <div style={{fontSize:32,marginBottom:8}}>🆕</div>
+        Nenhum pré-cadastro encontrado.
+      </div>}
+      {fil.map((p,i)=>{
+        var sc=statusCor[p.status]||statusCor["Pendente"];
+        return <div key={p.id} style={{padding:"16px 0",borderBottom:i<fil.length-1?`1px solid ${BRD}`:"none"}}>
+          <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:16}}>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:8}}>
+                <div style={{fontFamily:"Nunito,sans-serif",fontSize:14,fontWeight:800}}>{p.nome}</div>
+                <span style={{background:sc.bg,color:sc.c,fontSize:9.5,fontWeight:800,padding:"2px 9px",borderRadius:20,display:"flex",alignItems:"center",gap:4,flexShrink:0}}>
+                  <span style={{width:6,height:6,borderRadius:"50%",background:sc.dot,flexShrink:0}}/>
+                  {p.status}
+                </span>
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10,marginBottom:10}}>
+                {[["📍 Localização",`${p.cidade} · ${p.estado}`],["👤 Representante",p.representante],["📅 Data",`${p.data} · ${p.hora}`],["📞 Telefone",p.telefone||"—"],["📧 E-mail",p.email_cliente||"—"],["📄 Doc.",p.documento||"—"],["🌾 Produtor rural",p.produtor_rural?(p.produtor_rural+(p.produtor_rural==="Sim"&&p.cpf_produtor?(" · CPF "+p.cpf_produtor):"")):"—"],["💰 Crédito solicitado",p.credito_solicitado?("R$ "+p.credito_solicitado):"—"],["📦 Volume previsto",p.volume_previsto||"—"],["🌱 Culturas",p.culturas||"—"],["📐 Área (ha)",p.area_ha||"—"],...(p.credito_aprovado?[["💳 Crédito aprovado","R$ "+p.credito_aprovado]]:[]),...(p.prazo_aprovado?[["⏱️ Prazo aprovado",p.prazo_aprovado]]:[]),["🆔 ID",p.id]].map(([l,v])=>(
+                  <div key={l} style={{background:BG,borderRadius:8,padding:"8px 10px"}}>
+                    <div style={{fontSize:9.5,fontWeight:700,color:INK4,marginBottom:3}}>{l}</div>
+                    <div style={{fontSize:12,fontWeight:600,color:INK,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{v}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+          {(p.logradouro||p.bairro)&&<div style={{background:BG,borderRadius:8,padding:"8px 10px",marginBottom:10,fontSize:12,color:INK2,lineHeight:1.5}}><b style={{color:INK4,fontWeight:700}}>📫 Endereço:</b> {[p.logradouro,(p.numero?("nº "+p.numero):""),p.bairro,`${p.cidade} - ${p.estado}`].filter(Boolean).join(", ")}</div>}
+          {p.observacoes&&<div style={{background:BG,borderRadius:8,padding:"8px 10px",marginBottom:10,fontSize:12,color:INK2,lineHeight:1.5}}><b style={{color:INK4,fontWeight:700}}>📝 Observações:</b> {p.observacoes}</div>}
+          {p.status==="Devolvido"&&p.motivo_devolucao&&<div style={{background:"#FFEDD5",border:`1px solid #EA580C`,borderRadius:8,padding:"8px 10px",marginBottom:10,fontSize:12,color:"#9A3412",lineHeight:1.5}}><b>↩️ Devolvido — aguardando correção do representante. Motivo:</b> {p.motivo_devolucao}</div>}
+          {editId===p.id&&<div style={{background:"#F8FBFF",border:`1.5px solid ${B}`,borderRadius:10,padding:"12px 14px",marginBottom:12}}>
+            <div style={{fontSize:12,fontWeight:800,color:B,marginBottom:8}}>✏️ Editar pré-cadastro</div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+              {[["Nome","Nome"],["Rua/Logradouro","Logradouro"],["Número","Numero"],["Bairro","Bairro"],["Cidade","Cidade"],["Estado","Estado"],["Telefone","Telefone"],["E-mail","Email_Cliente"],["CNPJ/CPF","Documento"],["IE","IE"],["Culturas","Culturas"],["Área (ha)","Area_ha"],["Crédito (R$)","Credito_Solicitado"],["Volume previsto","Volume_Previsto"]].map(([lab,k])=>(
+                <div key={k}><div style={{fontSize:9.5,fontWeight:700,color:INK4,marginBottom:2}}>{lab}</div><input value={editForm[k]||""} onChange={e=>setCampo(k,e.target.value)} style={{width:"100%",padding:"6px 9px",border:`1px solid ${BRD}`,borderRadius:6,fontSize:12,fontFamily:"Nunito Sans,sans-serif",outline:"none",boxSizing:"border-box"}}/></div>
+              ))}
+            </div>
+            <div style={{marginTop:8}}><div style={{fontSize:9.5,fontWeight:700,color:INK4,marginBottom:2}}>Observações</div><textarea value={editForm.Observacoes||""} onChange={e=>setCampo("Observacoes",e.target.value)} rows={2} style={{width:"100%",padding:"6px 9px",border:`1px solid ${BRD}`,borderRadius:6,fontSize:12,fontFamily:"Nunito Sans,sans-serif",outline:"none",resize:"vertical",boxSizing:"border-box"}}/></div>
+            <div style={{display:"flex",gap:8,marginTop:10}}>
+              <button onClick={()=>salvarEdicao(p.id)} style={{padding:"7px 16px",background:V,color:"#fff",border:"none",borderRadius:8,fontFamily:"Nunito,sans-serif",fontSize:12,fontWeight:800,cursor:"pointer"}}>💾 Salvar</button>
+              <button onClick={()=>setEditId(null)} style={{padding:"7px 16px",background:"#F3F4F6",color:"#4B5563",border:`1px solid ${BRD}`,borderRadius:8,fontFamily:"Nunito,sans-serif",fontSize:12,fontWeight:800,cursor:"pointer"}}>Cancelar</button>
+            </div>
+          </div>}
+          <div style={{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center"}}>
+            {p.status!=="Cadastrado"&&<button onClick={()=>abrirEdicao(p)} style={{padding:"7px 14px",background:editId===p.id?"#1D4ED8":BP,color:editId===p.id?"#fff":B,border:`1.5px solid ${B}`,borderRadius:20,fontFamily:"Nunito,sans-serif",fontSize:11,fontWeight:800,cursor:"pointer"}}>✏️ Editar</button>}
+            {(p.status==="Pendente"||p.status==="Em análise")&&<button onClick={()=>devolver(p.id)} style={{padding:"7px 14px",background:"#FFF7ED",color:"#9A3412",border:`1.5px solid #EA580C`,borderRadius:20,fontFamily:"Nunito,sans-serif",fontSize:11,fontWeight:800,cursor:"pointer"}}>↩️ Devolver p/ correção</button>}
+            {p.status==="Pendente"&&<button onClick={()=>atualizarStatus(p.id,"Em análise")} style={{padding:"7px 14px",background:O,color:"#fff",border:"none",borderRadius:20,fontFamily:"Nunito,sans-serif",fontSize:11,fontWeight:800,cursor:"pointer"}}>🔍 Iniciar análise</button>}
+            {(p.status==="Pendente"||p.status==="Em análise")&&<button onClick={()=>{setCredAp("");setPrazoAp("");setAprovPc(p);}} style={{padding:"7px 14px",background:V,color:"#fff",border:"none",borderRadius:20,fontFamily:"Nunito,sans-serif",fontSize:11,fontWeight:800,cursor:"pointer"}}>✅ Marcar como cadastrado</button>}
+            {p.status!=="Recusado"&&p.status!=="Cadastrado"&&<button onClick={()=>atualizarStatus(p.id,"Recusado")} style={{padding:"7px 14px",background:"#F3F4F6",color:"#4B5563",border:`1px solid ${BRD}`,borderRadius:20,fontFamily:"Nunito,sans-serif",fontSize:11,fontWeight:800,cursor:"pointer"}}>✕ Recusar</button>}
+            {p.telefone&&<a href={`https://wa.me/55${String(p.telefone).replace(/[^0-9]/g,"")}`} target="_blank" rel="noreferrer" style={{padding:"7px 14px",background:"#25D366",color:"#fff",border:"none",borderRadius:20,fontFamily:"Nunito,sans-serif",fontSize:11,fontWeight:800,cursor:"pointer",textDecoration:"none",display:"inline-block"}}>📱 WhatsApp</a>}
+            <button onClick={()=>abrirChatPc(p.id)} style={{padding:"7px 14px",background:chatPc===p.id?"#1D4ED8":BP,color:chatPc===p.id?"#fff":B,border:`1.5px solid ${chatPc===p.id?"#1D4ED8":B}`,borderRadius:20,fontFamily:"Nunito,sans-serif",fontSize:11,fontWeight:800,cursor:"pointer",display:"flex",alignItems:"center",gap:5}}>
+              💬 Chat {(msgsPc[p.id]||[]).length>0&&<span style={{background:chatPc===p.id?"rgba(255,255,255,.3)":B,color:"#fff",fontSize:9,padding:"1px 6px",borderRadius:20,fontWeight:800}}>{(msgsPc[p.id]||[]).length}</span>}
+            </button>
+          </div>
+
+          {/* CHAT DO PRÉ-CADASTRO */}
+          {chatPc===p.id&&<div style={{marginTop:14,border:`1.5px solid ${B}`,borderRadius:12,overflow:"hidden"}}>
+            <div style={{background:B,padding:"10px 14px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+              <div style={{fontFamily:"Nunito,sans-serif",fontSize:12,fontWeight:800,color:"#fff",display:"flex",alignItems:"center",gap:7}}>
+                💬 Chat · {p.nome}
+                <span style={{fontSize:10,background:"rgba(255,255,255,.2)",padding:"1px 8px",borderRadius:20}}>Backoffice ↔ Representante</span>
+              </div>
+              <button onClick={()=>setChatPc(null)} style={{background:"rgba(255,255,255,.2)",border:"none",borderRadius:"50%",width:24,height:24,cursor:"pointer",color:"#fff",fontSize:14,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+            </div>
+            <div style={{maxHeight:240,overflowY:"auto",padding:"12px 14px",display:"flex",flexDirection:"column",gap:8,background:"#F8FBFF"}}>
+              {(msgsPc[p.id]||[]).length===0&&<div style={{textAlign:"center",padding:"24px 0",color:INK4,fontSize:12}}>
+                <div style={{fontSize:24,marginBottom:6}}>💬</div>
+                Nenhuma mensagem ainda. Use o chat para solicitar informações ao representante.
+              </div>}
+              {(msgsPc[p.id]||[]).map((m,mi)=>{
+                var ig=m.tipo==="gestor"||m.tipo==="backoffice";
+                return <div key={mi} style={{display:"flex",flexDirection:"column",alignItems:ig?"flex-end":"flex-start"}}>
+                  <div style={{maxWidth:"80%",padding:"8px 12px",borderRadius:ig?"12px 12px 2px 12px":"12px 12px 12px 2px",background:ig?B:"#fff",color:ig?"#fff":INK,fontSize:12,lineHeight:1.55,boxShadow:"0 1px 4px rgba(0,0,0,.08)"}}>{m.msg}</div>
+                  <div style={{fontSize:9,color:INK4,marginTop:2,display:"flex",gap:4}}>
+                    <span style={{fontWeight:700}}>{m.autor.split(" ")[0]}</span>
+                    <span>·</span><span>{m.data} {m.hora}</span>
+                  </div>
+                </div>;
+              })}
+              <div ref={chatPcEndRef}/>
+            </div>
+            <div style={{padding:"8px 12px",borderTop:`1px solid #DBEAFE`,background:"#fff",display:"flex",gap:8,alignItems:"flex-end"}}>
+              <textarea value={novaMsgPc} onChange={e=>setNovaMsgPc(e.target.value)}
+                onKeyDown={e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();enviarMsgPc();}}}
+                placeholder="Solicitar informação ao representante... (Enter = enviar)" rows={2}
+                style={{flex:1,padding:"8px 12px",border:`1.5px solid #BFDBFE`,borderRadius:8,fontFamily:"Nunito Sans,sans-serif",fontSize:12.5,outline:"none",resize:"none",lineHeight:1.5}}/>
+              <button onClick={enviarMsgPc} disabled={!novaMsgPc.trim()} style={{padding:"8px 14px",background:novaMsgPc.trim()?B:"#E0E0E0",color:"#fff",border:"none",borderRadius:8,fontFamily:"Nunito,sans-serif",fontSize:12,fontWeight:800,cursor:novaMsgPc.trim()?"pointer":"default"}}>Enviar ↑</button>
+            </div>
+            <div style={{padding:"8px 14px",background:"#EFF6FF",borderTop:`1px solid #DBEAFE`,fontSize:10.5,color:"#1E40AF"}}>
+              📱 O representante <strong>{p.representante.split(" ")[0]}</strong> receberá uma notificação no app ao receber sua mensagem.
+            </div>
+          </div>}
+        </div>;
+      })}
+    </Card>
+  </div>;
+}
+
+var RepCtx=createContext("");
+function PagePedidos({de,ate}){
+  var [lista,setLista]=useState([]);
+  var [loading,setLoading]=useState(true);
+  var [aberto,setAberto]=useState(null);
+  var [itensMap,setItensMap]=useState({});
+  var [cultura,setCultura]=useState("Todas");
+  var [catalogo,setCatalogo]=useState([]);
+  var [tkTon,setTkTon]=useState(null);
+  var [editPed,setEditPed]=useState(null);
+  var [epForm,setEpForm]=useState({});
+  var [epItens,setEpItens]=useState([]);
+  var [epSaving,setEpSaving]=useState(false);
+  function carregar(){
+    fetch(API_URL,{method:"POST",body:JSON.stringify({action:"getPedidos"})})
+      .then(r=>r.json()).then(res=>{ if(res.ok&&Array.isArray(res.data)) setLista(res.data); setLoading(false); }).catch(()=>setLoading(false));
+    fetch(API_URL,{method:"POST",body:JSON.stringify({action:"getCulturas"})})
+      .then(r=>r.json()).then(res=>{ if(res.ok&&Array.isArray(res.data)) setCatalogo(res.data); }).catch(()=>{});
+    fetch(API_URL,{method:"POST",body:JSON.stringify({action:"getTicketTonelada"})})
+      .then(r=>r.json()).then(res=>{ if(res.ok&&res.data) setTkTon(res.data); }).catch(()=>{});
+  }
+  useEffect(()=>{carregar();var _t=setInterval(carregar,30000);return ()=>clearInterval(_t);},[]);
+  function brl(n){n=parseFloat(n)||0;var s=n.toFixed(2).split(".");s[0]=s[0].replace(/\B(?=(\d{3})+(?!\d))/g,".");return "R$ "+s[0]+","+s[1];}
+  function aprovar(id,ok){
+    fetch(API_URL,{method:"POST",body:JSON.stringify({action:"aprovarPedido",id:id,aprovado:ok})})
+      .then(r=>r.json()).then(()=>{ setLista(l=>l.map(p=>p.id===id?{...p,status:ok?"Formalizado":"Recusado"}:p)); }).catch(()=>{});
+  }
+  function comentar(id){
+    var c=window.prompt("Comentário para o vendedor corrigir o pedido "+id+" (ele recebe por e-mail e vê no app):");
+    if(c===null||!c.trim()) return;
+    fetch(API_URL,{method:"POST",body:JSON.stringify({action:"comentarPedido",id:id,comentario:c.trim()})})
+      .then(r=>r.json()).then(res=>{
+        if(res.ok){ setLista(l=>l.map(p=>p.id===id?{...p,comentario_gestao:c.trim()}:p)); alert("✅ Comentário enviado ao vendedor."); }
+        else alert("⚠️ "+(res.error||"Erro ao enviar comentário."));
+      }).catch(()=>alert("⚠️ Sem conexão com o servidor."));
+  }
+  function gerarPdf(id){
+    if(!window.confirm("Gerar e reenviar o PDF do pedido "+id+" por e-mail (gestão, backoffice e vendedor)?")) return;
+    fetch(API_URL,{method:"POST",body:JSON.stringify({action:"reenviarPdfPedido",id:id})})
+      .then(r=>r.json()).then(res=>{
+        if(res.ok) alert("✅ PDF gerado e reenviado por e-mail.");
+        else alert("⚠️ Não foi possível gerar o PDF: "+(res.error||"erro desconhecido"));
+      }).catch(()=>alert("⚠️ Sem conexão com o servidor."));
+  }
+  function _brToIso(s){ s=String(s||""); var p=s.split("/"); return p.length===3?(p[2]+"-"+p[1]+"-"+p[0]):""; }
+  function _isoToBr(s){ s=String(s||""); var p=s.split("-"); return p.length===3?(p[2]+"/"+p[1]+"/"+p[0]):""; }
+  function abrirEditarPed(p){
+    setEditPed(p);
+    setEpForm({
+      tipo_vencimento:p.tipo_vencimento||"Dias", condicao:p.condicao||"", data_pag_iso:_brToIso(p.data_pagamento),
+      parc_qtd:String((p.parcelas&&p.parcelas.length)?p.parcelas.length:2), parc_datas:(p.parcelas||[]).map(x=>_brToIso(x.data)),
+      data_fim_iso:_brToIso(p.data_fim), prev_iso:_brToIso(p.previsao), corrigir:String(p.corrigir)!=="Nao",
+      observacoes:p.observacoes||"", contato:(p.contato&&String(p.contato).charAt(0)!=="#")?p.contato:"", planta:p.planta||"Jundiaí"
+    });
+    setEpItens([]);
+    fetch(API_URL,{method:"POST",body:JSON.stringify({action:"getItensPedido",id:p.id})})
+      .then(r=>r.json()).then(res=>{ if(res.ok&&Array.isArray(res.data)) setEpItens(res.data.map(it=>({produto:it.produto||"",cultura:it.cultura||"",unidade:it.unidade||"",quantidade:it.quantidade||"",preco:it.preco||""}))); }).catch(()=>{});
+  }
+  function epSet(k,v){ setEpForm(f=>({...f,[k]:v})); }
+  function epSetItem(i,k,v){ setEpItens(arr=>arr.map((it,j)=>j===i?{...it,[k]:v}:it)); }
+  function epAddItem(){ setEpItens(arr=>[...arr,{produto:"Tera Base Granel",cultura:"",unidade:"",quantidade:"",preco:""}]); }
+  function epRemItem(i){ setEpItens(arr=>arr.filter((it,j)=>j!==i)); }
+  function epParcSet(i,v){ setEpForm(f=>{ var d=(f.parc_datas||[]).slice(); d[i]=v; return {...f,parc_datas:d}; }); }
+  function epSubtotal(){ return epItens.reduce((a,it)=>a+(parseFloat(it.quantidade)||0)*(parseFloat(it.preco)||0),0); }
+  function salvarEditPed(){
+    var its=epItens.filter(it=>it.cultura&&(parseFloat(it.quantidade)||0)>0&&(parseFloat(it.preco)||0)>0)
+      .map(it=>({produto:it.produto,cultura:it.cultura,unidade:it.unidade,quantidade:parseFloat(it.quantidade)||0,preco:parseFloat(it.preco)||0,total:(parseFloat(it.quantidade)||0)*(parseFloat(it.preco)||0)}));
+    if(!its.length){ alert("⚠️ Adicione ao menos um item com cultura, quantidade e preço."); return; }
+    var tv=epForm.tipo_vencimento, pqt=parseInt(epForm.parc_qtd,10)||2;
+    if(tv==="Data Fixa"&&!epForm.data_pag_iso){ alert("⚠️ Informe a data de pagamento."); return; }
+    if(tv==="Dias"&&!String(epForm.condicao||"").trim()){ alert("⚠️ Informe a condição (dias)."); return; }
+    if(tv==="Data Fixa Parcelada"){ for(var k=0;k<pqt;k++){ if(!(epForm.parc_datas||[])[k]){ alert("⚠️ Informe a data de todas as parcelas."); return; } } }
+    if(!epForm.data_fim_iso||!epForm.prev_iso){ alert("⚠️ Informe data fim e previsão de retirada."); return; }
+    var payload={ action:"editarPedidoGestao", id:editPed.id, itens:its, tipo_vencimento:tv,
+      condicao_pagamento:tv==="Dias"?epForm.condicao:"", data_pagamento:tv==="Data Fixa"?_isoToBr(epForm.data_pag_iso):"",
+      parcelas_datas:tv==="Data Fixa Parcelada"?(epForm.parc_datas||[]).slice(0,pqt).map(_isoToBr):[],
+      data_fim_retirada:_isoToBr(epForm.data_fim_iso), previsao_retirada:_isoToBr(epForm.prev_iso),
+      corrigir:epForm.corrigir!==false, observacoes:epForm.observacoes, contato_assinatura:epForm.contato, planta:epForm.planta };
+    setEpSaving(true);
+    fetch(API_URL,{method:"POST",body:JSON.stringify(payload)})
+      .then(r=>r.json()).then(res=>{ setEpSaving(false);
+        if(res.ok){ alert("✅ Pedido editado. Continua aguardando aprovação — clique em Aprovar para gerar o PDF."); setEditPed(null); carregar(); }
+        else alert("⚠️ "+(res.error||"Erro ao salvar."));
+      }).catch(()=>{ setEpSaving(false); alert("⚠️ Sem conexão com o servidor."); });
+  }
+  function toggleItens(id){
+    if(aberto===id){ setAberto(null); return; }
+    setAberto(id);
+    if(!itensMap[id]) fetch(API_URL,{method:"POST",body:JSON.stringify({action:"getItensPedido",id:id})})
+      .then(r=>r.json()).then(res=>{ if(res.ok&&Array.isArray(res.data)) setItensMap(m=>({...m,[id]:res.data})); }).catch(()=>{});
+  }
+  // data dd/MM/yyyy -> Date
+  function pDate(s){ var p=(s||'').split('/'); return p.length>=3?new Date(+p[2],+p[1]-1,+p[0]):null; }
+  var dDe=de?new Date(de+"T00:00:00"):null, dAte=ate?new Date(ate+"T23:59:59"):null;
+  // culturas disponíveis: catálogo da planilha + as que aparecem nos pedidos
+  var setCul={}; catalogo.forEach(function(c){ if(c) setCul[c]=1; }); lista.forEach(function(p){ (p.culturas||[]).forEach(function(c){ if(c) setCul[c]=1; }); });
+  var culturasDisp=Object.keys(setCul).sort();
+  // filtro: período + cultura
+  var lista0=lista.filter(function(p){
+    var d=pDate(p.data); if(d&&dDe&&d<dDe) return false; if(d&&dAte&&d>dAte) return false;
+    if(cultura!=="Todas" && (p.culturas||[]).indexOf(cultura)<0) return false;
+    return true;
+  });
+  // valor considerado: se cultura específica, usa valor daquela cultura (preciso por item); senão total do pedido
+  function valOf(p){ return cultura!=="Todas" ? (parseFloat((p.valorCulturas||{})[cultura])||0) : (parseFloat(p.total)||0); }
+  var cor={"Formalizado":["#DCFCE7","#166534"],"Aguardando aprovacao":["#FEF3C7","#78350F"],"Recusado":["#F3F4F6","#4B5563"],"Cancelado":["#FEE2E2","#7F1D1D"]};
+  function ativo(p){ return p.status!=="Cancelado" && String(p.cancelado||"")!=="Sim"; }
+  var pend=lista0.filter(p=>p.status==="Aguardando aprovacao").length;
+  var ativos=lista0.filter(ativo);
+  var valTotal=ativos.reduce((a,p)=>a+valOf(p),0);
+  var ticket=ativos.length?valTotal/ativos.length:0;
+  var porRepK={},porMesK={},porStatus={},porPlanta={},porCultura={},porCanal={Presencial:0,Remoto:0},porCanalRep={};
+  lista0.forEach(function(p){
+    var st=p.status==="Aguardando aprovacao"?"Aguardando":(p.status||'?');
+    porStatus[st]=(porStatus[st]||0)+1;
+    if(!ativo(p)) return;
+    var v=valOf(p);
+    var rp=(p.vendedor||'?').split(' ')[0];
+    porRepK[rp]=(porRepK[rp]||0)+v;
+    var pl=p.planta||'?'; porPlanta[pl]=(porPlanta[pl]||0)+1;
+    var dp=(p.data||'').split('/'); if(dp.length>=3){ var k=dp[1]+'/'+dp[2].slice(-2); porMesK[k]=(porMesK[k]||0)+v; }
+    (p.culturas||[]).forEach(function(c){ porCultura[c]=(porCultura[c]||0)+1; });
+    var canal=(p.tipo_atendimento==="Remoto")?"Remoto":"Presencial";
+    porCanal[canal]=(porCanal[canal]||0)+1;
+    if(!porCanalRep[rp]) porCanalRep[rp]={Presencial:0,Remoto:0};
+    porCanalRep[rp][canal]++;
+  });
+  Object.keys(porRepK).forEach(function(k){ porRepK[k]=Math.round(porRepK[k]/1000); });
+  Object.keys(porMesK).forEach(function(k){ porMesK[k]=Math.round(porMesK[k]/1000); });
+  var canalRepList=Object.keys(porCanalRep).sort();
+  if(loading) return <div style={{display:"flex",alignItems:"center",justifyContent:"center",height:"60vh",gap:12,color:INK3,fontSize:13}}><div style={{width:32,height:32,border:`3px solid ${VP}`,borderTop:`3px solid ${V}`,borderRadius:"50%",animation:"spin 1s linear infinite"}}/> Carregando pedidos...</div>;
+  var ist={width:"100%",padding:"7px 9px",border:`1px solid ${BRD}`,borderRadius:7,fontSize:12.5,fontFamily:"Nunito Sans,sans-serif",outline:"none",boxSizing:"border-box"};
+  var lbl={fontSize:10.5,fontWeight:800,color:INK4,margin:"8px 0 3px",display:"block"};
+  return <div>
+    {editPed&&<div onClick={e=>{if(e.target===e.currentTarget)setEditPed(null);}} style={{position:"fixed",inset:0,background:"rgba(0,0,0,.5)",zIndex:1000,display:"flex",alignItems:"flex-start",justifyContent:"center",padding:"16px",overflowY:"auto"}}>
+      <div style={{background:"#fff",borderRadius:14,padding:"20px 22px",width:560,maxWidth:"95vw",maxHeight:"calc(100vh - 32px)",overflowY:"auto",boxShadow:"0 12px 40px rgba(0,0,0,.25)"}}>
+        <div style={{fontSize:16,fontWeight:900,color:V,fontFamily:"Nunito,sans-serif"}}>Editar pedido {editPed.id}</div>
+        <div style={{fontSize:12,color:INK3,marginBottom:12}}>{editPed.cliente} — ao salvar, o pedido continua <b>aguardando aprovação</b>; o PDF é gerado quando você clicar em Aprovar.</div>
+        <div style={lbl}>Itens</div>
+        {epItens.map((it,i)=>(
+          <div key={i} style={{border:`1px solid ${BRD}`,borderRadius:8,padding:8,marginBottom:6}}>
+            <div style={{display:"flex",gap:6,marginBottom:5}}>
+              <select value={it.produto} onChange={e=>epSetItem(i,"produto",e.target.value)} style={{...ist,flex:2}}><option>Tera Base Granel</option><option>Tera Base Ensacado</option></select>
+              <input value={it.cultura} onChange={e=>epSetItem(i,"cultura",e.target.value)} placeholder="Cultura" style={{...ist,flex:2}}/>
+              <button onClick={()=>epRemItem(i)} style={{background:"#FEE2E2",color:"#B91C1C",border:"none",borderRadius:7,width:34,cursor:"pointer",fontWeight:800}}>✕</button>
+            </div>
+            <div style={{display:"flex",gap:6}}>
+              <input value={it.unidade} onChange={e=>epSetItem(i,"unidade",e.target.value)} placeholder="Unidade" style={{...ist,flex:2}}/>
+              <input type="number" value={it.quantidade} onChange={e=>epSetItem(i,"quantidade",e.target.value)} placeholder="Qtd" style={{...ist,flex:1}}/>
+              <input type="number" value={it.preco} onChange={e=>epSetItem(i,"preco",e.target.value)} placeholder="Preço un." style={{...ist,flex:1}}/>
+            </div>
+          </div>
+        ))}
+        <button onClick={epAddItem} style={{background:VP,color:V,border:"none",borderRadius:18,padding:"6px 12px",fontSize:11,fontWeight:800,cursor:"pointer"}}>+ Adicionar item</button>
+        <div style={{fontSize:12,fontWeight:800,color:INK2,margin:"8px 0"}}>Subtotal: {brl(epSubtotal())} <span style={{fontWeight:600,color:INK4,fontSize:10.5}}>(total e correção recalculados ao salvar)</span></div>
+        <div style={lbl}>Tipo de vencimento</div>
+        <select value={epForm.tipo_vencimento} onChange={e=>epSet("tipo_vencimento",e.target.value)} style={ist}><option>Dias</option><option>Data Fixa</option><option>Data Fixa Parcelada</option></select>
+        {epForm.tipo_vencimento==="Dias"&&<div><div style={lbl}>Condição (dias)</div><input value={epForm.condicao} onChange={e=>epSet("condicao",e.target.value)} placeholder="ex.: 30/60/90 dias" style={ist}/></div>}
+        {epForm.tipo_vencimento==="Data Fixa"&&<div><div style={lbl}>Data de pagamento</div><input type="date" value={epForm.data_pag_iso} onChange={e=>epSet("data_pag_iso",e.target.value)} style={ist}/></div>}
+        {epForm.tipo_vencimento==="Data Fixa Parcelada"&&<div><div style={lbl}>Quantidade de parcelas</div><select value={epForm.parc_qtd} onChange={e=>epSet("parc_qtd",e.target.value)} style={ist}><option value="2">2 parcelas</option><option value="3">3 parcelas</option></select>{[0,1,2].slice(0,parseInt(epForm.parc_qtd,10)||2).map(i=>(<div key={i}><div style={lbl}>Vencimento da {i+1}ª parcela</div><input type="date" value={(epForm.parc_datas||[])[i]||""} onChange={e=>epParcSet(i,e.target.value)} style={ist}/></div>))}</div>}
+        <div style={{display:"flex",gap:10}}>
+          <div style={{flex:1}}><div style={lbl}>Data fim de retirada</div><input type="date" value={epForm.data_fim_iso} onChange={e=>epSet("data_fim_iso",e.target.value)} style={ist}/></div>
+          <div style={{flex:1}}><div style={lbl}>Previsão de retirada</div><input type="date" value={epForm.prev_iso} onChange={e=>epSet("prev_iso",e.target.value)} style={ist}/></div>
+        </div>
+        <div style={lbl}>Planta</div>
+        <select value={epForm.planta} onChange={e=>epSet("planta",e.target.value)} style={ist}><option>Jundiaí</option><option>Paulínia</option></select>
+        <div style={lbl}>Contato p/ assinatura</div>
+        <input value={epForm.contato} onChange={e=>epSet("contato",e.target.value)} placeholder="WhatsApp ou e-mail" style={ist}/>
+        <div style={lbl}>Observação</div>
+        <textarea value={epForm.observacoes} onChange={e=>epSet("observacoes",e.target.value)} rows={2} style={{...ist,resize:"vertical"}}/>
+        <div style={lbl}>Correção financeira</div>
+        <select value={epForm.corrigir?"sim":"nao"} onChange={e=>epSet("corrigir",e.target.value==="sim")} style={ist}><option value="sim">Cobrar correção</option><option value="nao">Não cobrar</option></select>
+        <div style={{display:"flex",gap:10,justifyContent:"flex-end",marginTop:16}}>
+          <button onClick={()=>setEditPed(null)} style={{padding:"9px 16px",background:"#F3F4F6",color:"#4B5563",border:`1px solid ${BRD}`,borderRadius:20,fontWeight:800,fontSize:12,cursor:"pointer"}}>Cancelar</button>
+          <button disabled={epSaving} onClick={salvarEditPed} style={{padding:"9px 18px",background:V,color:"#fff",border:"none",borderRadius:20,fontWeight:800,fontSize:12,cursor:"pointer",opacity:epSaving?0.6:1}}>{epSaving?"Salvando...":"💾 Salvar edição"}</button>
+        </div>
+      </div>
+    </div>}
+    <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:14,flexWrap:"wrap"}}>
+      <span style={{fontSize:12,fontWeight:800,color:INK3,textTransform:"uppercase",letterSpacing:".5px"}}>🌱 Filtrar por cultura</span>
+      <select value={cultura} onChange={e=>setCultura(e.target.value)} style={{padding:"9px 14px",borderRadius:10,border:`1px solid ${BRD}`,background:"#fff",fontFamily:"Nunito,sans-serif",fontSize:13,fontWeight:700,color:INK,cursor:"pointer",minWidth:200}}>
+        <option value="Todas">Todas as culturas</option>
+        {culturasDisp.map(c=><option key={c} value={c}>{c}</option>)}
+      </select>
+      {cultura!=="Todas"&&<span style={{background:VP,color:V,fontSize:11.5,fontWeight:800,padding:"5px 12px",borderRadius:20}}>{lista0.length} {lista0.length===1?"venda":"vendas"} de {cultura} no período</span>}
+    </div>
+    <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12,marginBottom:18}}>
+      <KPI icon="📄" val={lista0.length} lbl={cultura==="Todas"?"Pedidos no período":"Vendas de "+cultura} ac={V} ib={VP}/>
+      <KPI icon="⏳" val={pend} lbl="Aguardando aprovação" delta={pend>0?"Ação necessária":"Tudo em dia"} ac={O} ib={OP}/>
+      <KPI icon="💰" val={brl(valTotal)} lbl={cultura==="Todas"?"Valor total":"Valor em "+cultura} ac={B} ib={BP}/>
+      <KPI icon="🎯" val={brl(ticket)} lbl="Ticket médio" ac={M} ib={MP}/>
+    </div>
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:18}}>
+      <Card title="Valor por representante (R$ mil)"><BarChart data={porRepK} colors={[V,O,M,B,"#9333EA","#16A34A","#CA8A04"]} h={170}/></Card>
+      <Card title="Valor por mês (R$ mil)"><BarChart data={porMesK} colors={[O]} h={170}/></Card>
+    </div>
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:18}}>
+      <Card title="Status dos pedidos"><Donut data={porStatus} colors={["#16A34A","#CA8A04","#9CA3AF"]} lbl="pedidos"/></Card>
+      <Card title="Pedidos por planta"><Donut data={porPlanta} colors={[V,O]} lbl="pedidos"/></Card>
+    </div>
+    <div style={{marginBottom:18}}>
+      <Card title="Pedidos por cultura (nº de vendas)"><BarChart data={porCultura} colors={["#16A34A",V,O,M,B,"#9333EA","#CA8A04","#0EA5E9"]} h={180}/></Card>
+    </div>
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:18}}>
+      <Card title="Vendas por canal (presencial × remoto)"><Donut data={porCanal} colors={[V,"#2563EB"]} lbl="vendas"/></Card>
+      <Card title="Canal por representante">
+        {canalRepList.length===0&&<div style={{fontSize:12,color:INK4,padding:"6px 0"}}>Sem vendas no período.</div>}
+        {canalRepList.length>0&&<div style={{overflowX:"auto"}}><table style={{width:"100%",borderCollapse:"collapse"}}>
+          <thead><tr>{["Representante","🤝 Presencial","📞 Remoto","% Remoto"].map(hh=><th key={hh} style={{fontSize:9.5,fontWeight:800,color:INK4,textTransform:"uppercase",letterSpacing:".4px",padding:"6px 8px",textAlign:"left",borderBottom:`1.5px solid ${BRD}`,whiteSpace:"nowrap"}}>{hh}</th>)}</tr></thead>
+          <tbody>{canalRepList.map(function(r){ var pr=porCanalRep[r].Presencial, rm=porCanalRep[r].Remoto, tot=pr+rm, pctRem=tot?Math.round(rm/tot*100):0; return <tr key={r} style={{borderBottom:`1px solid ${BRD}`}}>
+            <td style={{padding:"8px",fontSize:12,fontWeight:700}}>{r}</td>
+            <td style={{padding:"8px",fontFamily:"JetBrains Mono,monospace",fontSize:12.5,color:V,fontWeight:700}}>{pr}</td>
+            <td style={{padding:"8px",fontFamily:"JetBrains Mono,monospace",fontSize:12.5,color:"#2563EB",fontWeight:700}}>{rm}</td>
+            <td style={{padding:"8px"}}><span style={{fontSize:10,fontWeight:800,padding:"2px 8px",borderRadius:20,background:pctRem>=80?"#FEE2E2":pctRem>=50?"#FEF3C7":"#DCFCE7",color:pctRem>=80?"#7F1D1D":pctRem>=50?"#78350F":"#166534"}}>{pctRem}%</span></td>
+          </tr>; })}</tbody>
+        </table></div>}
+      </Card>
+    </div>
+    {tkTon&&<Card title="🎯 Ticket médio por tonelada" style={{marginBottom:18}}>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12,marginBottom:14}}>
+        {[["Geral",tkTon.geral],["Granel",tkTon.granel],["Ensacado",tkTon.ensacado]].map(([lb,o])=>(
+          <div key={lb} style={{background:BG,borderRadius:10,padding:"12px 14px"}}>
+            <div style={{fontSize:10.5,fontWeight:800,color:INK4,textTransform:"uppercase",letterSpacing:".4px"}}>{lb}</div>
+            <div style={{fontSize:18,fontWeight:900,color:V,marginTop:4}}>{brl(o.ticket)}<span style={{fontSize:11,fontWeight:600,color:INK4}}>/t</span></div>
+            <div style={{fontSize:10.5,color:INK4,marginTop:2}}>{(o.ton||0).toLocaleString("pt-BR")} t · {brl(o.valor)}</div>
+          </div>
+        ))}
+      </div>
+      <div style={{fontSize:11,fontWeight:800,color:INK3,marginBottom:6}}>Por representante (R$/tonelada)</div>
+      <div style={{overflowX:"auto"}}><table style={{width:"100%",borderCollapse:"collapse"}}>
+        <thead><tr>{["Representante","Granel","Ensacado","Geral"].map(hh=><th key={hh} style={{fontSize:9.5,fontWeight:800,color:INK4,textTransform:"uppercase",letterSpacing:".4px",padding:"6px 8px",textAlign:"left",borderBottom:`1.5px solid ${BRD}`,whiteSpace:"nowrap"}}>{hh}</th>)}</tr></thead>
+        <tbody>{Object.keys(tkTon.por_vendedor||{}).sort().map(function(vn){ var o=tkTon.por_vendedor[vn]; return <tr key={vn} style={{borderBottom:`1px solid ${BRD}`}}>
+          <td style={{padding:"8px",fontSize:12,fontWeight:700}}>{vn}</td>
+          <td style={{padding:"8px",fontFamily:"JetBrains Mono,monospace",fontSize:12}}>{o.granel.ton>0?brl(o.granel.ticket):"—"}</td>
+          <td style={{padding:"8px",fontFamily:"JetBrains Mono,monospace",fontSize:12}}>{o.ensacado.ton>0?brl(o.ensacado.ticket):"—"}</td>
+          <td style={{padding:"8px",fontFamily:"JetBrains Mono,monospace",fontSize:12,fontWeight:700,color:V}}>{o.geral.ton>0?brl(o.geral.ticket):"—"}</td>
+        </tr>; })}</tbody>
+      </table></div>
+    </Card>}
+    <Card title={`Pedidos de venda · ${lista0.length}`}>
+      {lista0.length===0&&<div style={{textAlign:"center",padding:"32px",color:INK4,fontSize:13}}><div style={{fontSize:32,marginBottom:8}}>📄</div>{cultura==="Todas"?"Nenhum pedido no período selecionado.":"Nenhuma venda de "+cultura+" no período."}</div>}
+      {lista0.map((p,i)=>{
+        var c=cor[p.status]||cor["Aguardando aprovacao"];
+        var pendente=p.status==="Aguardando aprovacao";
+        return <div key={p.id} style={{padding:"14px 0",borderBottom:i<lista0.length-1?`1px solid ${BRD}`:"none"}}>
+          <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:12,flexWrap:"wrap"}}>
+            <div style={{flex:1,minWidth:200}}>
+              <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:6,flexWrap:"wrap"}}>
+                <span style={{fontFamily:"Nunito,sans-serif",fontSize:13.5,fontWeight:900,color:INK}}>{p.id}</span>
+                <span style={{background:c[0],color:c[1],fontSize:9.5,fontWeight:800,padding:"2px 9px",borderRadius:20}}>{p.status==="Aguardando aprovacao"?"Aguardando aprovação":p.status}</span>
+                {p.corrigir==="Nao"&&<span style={{background:"#FEE2E2",color:"#7F1D1D",fontSize:9,fontWeight:800,padding:"2px 8px",borderRadius:20}}>sem correção</span>}
+              </div>
+              <div style={{fontSize:12.5,fontWeight:700,color:INK2}}>{p.cliente}</div>
+              <div style={{fontSize:11,color:INK3,marginTop:2}}>👤 {p.vendedor} · 🏭 {p.planta} · 📅 {p.data}{p.tipo_atendimento?(p.tipo_atendimento==="Remoto"?" · 📞 Remoto":" · 🤝 Presencial"):""}</div>
+              {p.culturas&&p.culturas.length>0&&<div style={{fontSize:11,color:INK3,marginTop:2}}>🌱 {p.culturas.join(", ")}</div>}
+              {p.contato&&p.contato!=="#ERROR!"&&!String(p.contato).startsWith("#")&&<div style={{fontSize:11,color:INK2,marginTop:2,fontWeight:700}}>✍️ Contato p/ assinatura: <span style={{color:O}}>{p.contato}</span></div>}
+              <div style={{fontSize:12,fontWeight:800,color:V,marginTop:4}}>{brl(p.total)}{parseFloat(p.correcao)>0?<span style={{fontWeight:600,color:INK4,fontSize:11}}> (correção {brl(p.correcao)})</span>:null}</div>
+              <div style={{marginTop:6,background:BG,borderRadius:8,padding:"7px 10px",fontSize:11,color:INK3,lineHeight:1.7}}>
+                {p.tipo_vencimento==="Data Fixa Parcelada"
+                  ? <div>💳 <b>Pagamento parcelado:</b>{(p.parcelas||[]).map((x,k)=><div key={k} style={{paddingLeft:14}}>• Parcela {x.n} — {x.data||"—"}: <b>{brl(x.valor)}</b>{x.correcao>0?<span style={{color:O,fontSize:10}}> (financeiro {brl(x.correcao)})</span>:null}</div>)}</div>
+                  : <div>💳 <b>Pagamento:</b> {p.tipo_vencimento==="Data Fixa"?("Data fixa · "+(p.data_pagamento||"—")):("Dias · "+(p.condicao||"—"))}</div>}
+                <div>📦 <b>Retirada:</b> data fim {p.data_fim||"—"} · previsão {p.previsao||"—"}</div>
+                {p.observacoes&&<div>📝 <b>Observação:</b> {p.observacoes}</div>}
+                {p.comentario_gestao&&<div style={{color:"#9A3412",marginTop:2}}>💬 <b>Comentário enviado:</b> {p.comentario_gestao}</div>}
+              </div>
+            </div>
+            <div style={{display:"flex",flexDirection:"column",gap:6,alignItems:"flex-end"}}>
+              {pendente&&<div style={{display:"flex",gap:6,flexWrap:"wrap",justifyContent:"flex-end"}}>
+                <button onClick={()=>aprovar(p.id,true)} style={{padding:"7px 14px",background:V,color:"#fff",border:"none",borderRadius:20,fontFamily:"Nunito,sans-serif",fontSize:11,fontWeight:800,cursor:"pointer"}}>✅ Aprovar</button>
+                <button onClick={()=>comentar(p.id)} style={{padding:"7px 14px",background:"#FFF7ED",color:"#9A3412",border:`1px solid #FED7AA`,borderRadius:20,fontFamily:"Nunito,sans-serif",fontSize:11,fontWeight:800,cursor:"pointer"}}>💬 Comentar</button>
+                <button onClick={()=>abrirEditarPed(p)} style={{padding:"7px 14px",background:"#EEF2FF",color:"#3730A3",border:`1px solid #C7D2FE`,borderRadius:20,fontFamily:"Nunito,sans-serif",fontSize:11,fontWeight:800,cursor:"pointer"}}>✏️ Editar</button>
+                <button onClick={()=>aprovar(p.id,false)} style={{padding:"7px 14px",background:"#F3F4F6",color:"#4B5563",border:`1px solid ${BRD}`,borderRadius:20,fontFamily:"Nunito,sans-serif",fontSize:11,fontWeight:800,cursor:"pointer"}}>✕ Recusar</button>
+              </div>}
+              {!pendente&&p.status!=="Cancelado"&&<button onClick={()=>comentar(p.id)} style={{padding:"7px 14px",background:"#FFF7ED",color:"#9A3412",border:`1px solid #FED7AA`,borderRadius:20,fontFamily:"Nunito,sans-serif",fontSize:11,fontWeight:800,cursor:"pointer"}}>💬 Comentar</button>}
+              {p.status==="Formalizado"&&<button onClick={()=>gerarPdf(p.id)} style={{padding:"7px 14px",background:V,color:"#fff",border:"none",borderRadius:20,fontFamily:"Nunito,sans-serif",fontSize:11,fontWeight:800,cursor:"pointer"}}>📧 Gerar PDF</button>}
+              <span onClick={()=>toggleItens(p.id)} style={{fontSize:11,fontWeight:700,color:V3,cursor:"pointer"}}>{aberto===p.id?"Ocultar itens ▲":"Ver itens ▼"}</span>
+            </div>
+          </div>
+          {aberto===p.id&&<div style={{marginTop:10,background:BG,borderRadius:8,padding:"8px 10px"}}>
+            <table style={{width:"100%",borderCollapse:"collapse"}}>
+              <thead><tr>{["Produto","Cultura","Qtd","Unidade","Preço unit.","Total"].map(hh=><th key={hh} style={{fontSize:9,fontWeight:800,color:INK4,textTransform:"uppercase",letterSpacing:".5px",padding:"4px 8px",textAlign:"left"}}>{hh}</th>)}</tr></thead>
+              <tbody>{(itensMap[p.id]||[]).map((it,j)=><tr key={j}>
+                <td style={{fontSize:11,padding:"4px 8px"}}>{it.produto}</td>
+                <td style={{fontSize:11,padding:"4px 8px"}}>{it.cultura}</td>
+                <td style={{fontSize:11,padding:"4px 8px"}}>{it.quantidade}</td>
+                <td style={{fontSize:11,padding:"4px 8px"}}>{it.unidade}</td>
+                <td style={{fontSize:11,padding:"4px 8px"}}>{brl(it.preco)}</td>
+                <td style={{fontSize:11,padding:"4px 8px",fontWeight:700}}>{brl(it.total)}</td>
+              </tr>)}</tbody>
+            </table>
+            {!itensMap[p.id]&&<div style={{fontSize:11,color:INK4,padding:"4px 8px"}}>Carregando itens...</div>}
+          </div>}
+        </div>;
+      })}
+    </Card>
+  </div>;
+}
+
+function App(){
+  var [pg,setPg]=useState("dashboard");
+  var [rep,setRep]=useState("");
+  var hoje=new Date().toISOString().slice(0,10);
+  var d7=new Date();d7.setDate(d7.getDate()-6);
+  var [de,setDe]=useState(d7.toISOString().slice(0,10));
+  var [ate,setAte]=useState(hoje);
+  var MENUS=[{id:"dashboard",ico:"📊",l:"Dashboard",g:"visitas"},{id:"timeline",ico:"🗓",l:"Timeline",g:"visitas"},{id:"representantes",ico:"👥",l:"Representantes",g:"visitas"},{id:"carteira",ico:"🏢",l:"Cobertura",g:"visitas"},{id:"eficiencia",ico:"🔎",l:"Acompanhamento",g:"visitas"},{id:"precadastros",ico:"🆕",l:"Pré-Cadastros",g:"visitas",badge:PRE_CADASTROS_DEMO.filter(p=>p.status==="Pendente").length},{id:"comercial",ico:"💰",l:"Comercial",g:"vendas"},{id:"pedidos",ico:"📄",l:"Pedidos",g:"vendas"}];
+  var TITLES={dashboard:"Dashboard Geral",timeline:"Timeline de Visitas",representantes:"Representantes",carteira:"Cobertura da Carteira",eficiencia:"Acompanhamento por Cliente",comercial:"Painel Comercial",precadastros:"Pré-Cadastros de Clientes",pedidos:"Pedidos de Venda"};
+
+  return <div style={{display:"flex",minHeight:"100vh",fontFamily:"Nunito Sans,sans-serif",background:BG}}>
+    <aside style={{width:220,background:V,display:"flex",flexDirection:"column",flexShrink:0,position:"sticky",top:0,height:"100vh",overflowY:"auto"}}>
+      <div style={{padding:"20px 16px 16px",borderBottom:"1px solid rgba(255,255,255,.1)"}}>
+        <div style={{background:"#fff",borderRadius:12,padding:"12px 10px",boxShadow:"0 6px 18px rgba(0,0,0,.2)",borderBottom:`3px solid ${O}`}}>
+          <img src={LOGO_TERA} alt="Tera Nutrição Vegetal" style={{width:"100%",maxWidth:150,display:"block",margin:"0 auto"}}/>
+        </div>
+        <div style={{fontSize:9,color:"rgba(255,255,255,.5)",letterSpacing:"1.5px",textTransform:"uppercase",marginTop:10,textAlign:"center"}}>Painel de Gestão</div>
+      </div>
+      <nav style={{flex:1,padding:"12px 8px"}}>
+        <div style={{fontSize:9,fontWeight:800,color:"rgba(255,255,255,.35)",letterSpacing:"1.5px",textTransform:"uppercase",padding:"12px 10px 7px"}}>Visitas</div>
+        {MENUS.filter(m=>m.g==="visitas").map(m=><div key={m.id} onClick={()=>setPg(m.id)} style={{display:"flex",alignItems:"center",gap:9,padding:"9px 11px",borderRadius:9,cursor:"pointer",background:pg===m.id?"rgba(255,255,255,.18)":"transparent",color:pg===m.id?"#fff":"rgba(255,255,255,.65)",fontSize:12.5,fontWeight:600,marginBottom:1,transition:"all .15s"}}>
+          <span style={{fontSize:15}}>{m.ico}</span>{m.l}
+          {m.badge>0&&m.id!=="timeline"&&<span style={{marginLeft:"auto",background:"#DC2626",color:"#fff",fontSize:9.5,fontWeight:800,padding:"1px 7px",borderRadius:20}}>{m.badge}</span>}
+        </div>)}
+        <div style={{fontSize:9,fontWeight:800,color:"rgba(255,255,255,.35)",letterSpacing:"1.5px",textTransform:"uppercase",padding:"14px 10px 7px"}}>Vendas</div>
+        {MENUS.filter(m=>m.g==="vendas").map(m=><div key={m.id} onClick={()=>setPg(m.id)} style={{display:"flex",alignItems:"center",gap:9,padding:"9px 11px",borderRadius:9,cursor:"pointer",background:pg===m.id?"rgba(255,255,255,.18)":"transparent",color:pg===m.id?"#fff":"rgba(255,255,255,.65)",fontSize:12.5,fontWeight:600,marginBottom:1,transition:"all .15s"}}>
+          <span style={{fontSize:15}}>{m.ico}</span>{m.l}
+        </div>)}
+        <div style={{fontSize:9,fontWeight:800,color:"rgba(255,255,255,.35)",letterSpacing:"1.5px",textTransform:"uppercase",padding:"14px 10px 7px"}}>Dados</div>
+        <div onClick={()=>window.open("https://docs.google.com/spreadsheets/d/182w1l7GfbfVUEahkQ8kYMh8IDcb807qUNuV10te36lY")} style={{display:"flex",alignItems:"center",gap:9,padding:"9px 11px",borderRadius:9,cursor:"pointer",color:"rgba(255,255,255,.65)",fontSize:12.5,fontWeight:600}}>
+          <span style={{fontSize:15}}>📋</span>Planilha Google
+        </div>
+      </nav>
+      <div style={{padding:14,borderTop:"1px solid rgba(255,255,255,.1)",display:"flex",alignItems:"center",gap:9,justifyContent:"space-between"}}>
+        <div style={{display:"flex",alignItems:"center",gap:9,minWidth:0}}>
+          <div style={{width:30,height:30,borderRadius:"50%",background:"rgba(255,255,255,.2)",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:800,flexShrink:0}}>{iniGestor()}</div>
+          <div style={{minWidth:0}}><div style={{fontSize:11.5,fontWeight:700,color:"#fff",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{nomeGestor()}</div><div style={{fontSize:9.5,color:"rgba(255,255,255,.45)"}}>Gestão · Tera NV</div></div>
+        </div>
+        <button onClick={()=>{try{localStorage.removeItem("tera_dash_sessao");}catch(e){};window.location.reload();}} title="Sair" style={{background:"rgba(255,255,255,.12)",border:"1px solid rgba(255,255,255,.25)",color:"rgba(255,255,255,.8)",borderRadius:8,padding:"5px 10px",fontFamily:"Nunito,sans-serif",fontSize:10.5,fontWeight:800,cursor:"pointer",flexShrink:0}}>Sair ⎋</button>
+      </div>
+    </aside>
+    <main style={{flex:1,display:"flex",flexDirection:"column",minWidth:0}}>
+      <Topbar title={TITLES[pg]} de={de} ate={ate} setDe={setDe} setAte={setAte} rep={rep} setRep={setRep}/>
+      <div style={{padding:"22px 24px",flex:1,overflowY:"auto"}}>
+        {pg==="dashboard"&&<PageDash de={de} ate={ate}/>}
+        {pg==="timeline"&&<PageTimeline/>}
+        {pg==="representantes"&&<PageReps de={de} ate={ate}/>}
+        {pg==="carteira"&&<PageCobertura/>}
+        {pg==="eficiencia"&&<PageEficiencia/>}
+        {pg==="comercial"&&<PageComercial/>}
+        {pg==="precadastros"&&<PagePreCadastros/>}
+        {pg==="pedidos"&&<PagePedidos de={de} ate={ate}/>}
+      </div>
+    </main>
+  </div>;
+}
+
+
+function DashLogin({onOk}){
+  var [email,setEmail]=useState("");
+  var [pin,setPin]=useState("");
+  var [erro,setErro]=useState("");
+  var [carregando,setCarregando]=useState(false);
+  function entrar(){
+    if(!email.trim()||!pin.trim()){ setErro("Informe e-mail e PIN."); return; }
+    setCarregando(true); setErro("");
+    fetch(API_URL,{method:"POST",body:JSON.stringify({action:"autenticar",email:email.trim(),pin:pin.trim()})})
+      .then(r=>r.json())
+      .then(res=>{
+        var d=res&&res.data;
+        if(res.ok&&d&&d.autenticado){
+          var u=d.usuario||{};
+          if(String(u.tipo||"").toLowerCase()!=="gestao"){ setErro("Acesso restrito à gestão e backoffice."); setCarregando(false); return; }
+          try{ localStorage.setItem("tera_dash_sessao",JSON.stringify(u)); }catch(e){}
+          window.DASH_USER=u;
+          onOk(u);
+        } else { setErro((d&&d.msg)||"E-mail ou PIN incorretos."); setCarregando(false); }
+      })
+      .catch(()=>{ setErro("Sem conexão com o servidor. Tente novamente."); setCarregando(false); });
+  }
+  return <div style={{minHeight:"100vh",background:V,display:"flex",alignItems:"center",justifyContent:"center",padding:20,fontFamily:"Nunito Sans,sans-serif"}}>
+    <div style={{width:"100%",maxWidth:380}}>
+      <div style={{background:"#fff",borderRadius:14,padding:"16px 14px",boxShadow:"0 8px 26px rgba(0,0,0,.25)",borderBottom:`4px solid ${O}`,marginBottom:14}}>
+        <img src={LOGO_TERA} alt="Tera" style={{width:"100%",maxWidth:200,display:"block",margin:"0 auto"}}/>
+      </div>
+      <div style={{textAlign:"center",fontSize:10,color:"rgba(255,255,255,.55)",letterSpacing:"2px",textTransform:"uppercase",marginBottom:22}}>Painel de Gestão</div>
+      <div style={{background:"rgba(255,255,255,.08)",border:"1px solid rgba(255,255,255,.15)",borderRadius:16,padding:"20px 18px"}}>
+        <div style={{fontSize:10.5,fontWeight:800,color:"rgba(255,255,255,.6)",letterSpacing:".8px",textTransform:"uppercase",marginBottom:5}}>E-mail corporativo</div>
+        <input value={email} onChange={e=>setEmail(e.target.value)} type="email" placeholder="seu@teranv.com.br" style={{width:"100%",boxSizing:"border-box",padding:"12px 13px",borderRadius:10,border:"none",fontFamily:"Nunito Sans,sans-serif",fontSize:14,outline:"none",marginBottom:14}}/>
+        <div style={{fontSize:10.5,fontWeight:800,color:"rgba(255,255,255,.6)",letterSpacing:".8px",textTransform:"uppercase",marginBottom:5}}>PIN de acesso</div>
+        <input value={pin} onChange={e=>setPin(e.target.value)} onKeyDown={e=>{if(e.key==="Enter")entrar();}} type="password" inputMode="numeric" maxLength={4} placeholder="••••" style={{width:"100%",boxSizing:"border-box",padding:"12px 13px",borderRadius:10,border:"none",fontFamily:"Nunito Sans,sans-serif",fontSize:16,letterSpacing:"6px",outline:"none"}}/>
+        {erro&&<div style={{background:"#FEE2E2",color:"#7F1D1D",borderRadius:8,padding:"9px 12px",fontSize:12,fontWeight:700,marginTop:12}}>⚠️ {erro}</div>}
+        <button onClick={entrar} disabled={carregando} style={{width:"100%",marginTop:16,padding:"13px",background:carregando?"rgba(255,255,255,.35)":"#fff",color:V,border:"none",borderRadius:10,fontFamily:"Nunito,sans-serif",fontSize:14.5,fontWeight:900,cursor:carregando?"default":"pointer"}}>{carregando?"Verificando...":"Entrar →"}</button>
+      </div>
+      <div style={{textAlign:"center",marginTop:14,fontSize:10,color:"rgba(255,255,255,.35)"}}>🔒 Acesso restrito · Perfil gestão · Tera Nutrição Vegetal</div>
+    </div>
+  </div>;
+}
+
+function LoginGate(){
+  var [user,setUser]=useState(function(){
+    try{ var s=JSON.parse(localStorage.getItem("tera_dash_sessao")||"null"); if(s&&s.nome){ window.DASH_USER=s; return s; } }catch(e){}
+    return null;
+  });
+  if(!user) return <DashLogin onOk={setUser}/>;
+  return <App/>;
+}
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(React.createElement(LoginGate));
+
+</script>
+</body>
+</html>
